@@ -1,3 +1,21 @@
+/**
+ * @file
+ * This file is part of AdGuard Browser Extension (https://github.com/AdguardTeam/AdguardBrowserExtension).
+ *
+ * AdGuard Browser Extension is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdGuard Browser Extension is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import React, { useContext } from 'react';
 import { observer } from 'mobx-react';
 
@@ -5,16 +23,16 @@ import { SettingsSection } from '../Settings/SettingsSection';
 import { SettingsSetCheckbox } from '../Settings/SettingsSetCheckbox';
 import { Setting, SETTINGS_TYPES } from '../Settings/Setting';
 import { rootStore } from '../../stores/RootStore';
-import { log } from '../../../../common/log';
+import { Log } from '../../../../common/log';
 import { reactTranslator } from '../../../../common/translators/reactTranslator';
+import { GLOBAL_PRIVACY_CONTROL_URL, DO_NOT_TRACK_URL } from '../../constants';
+
 import {
-    GLOBAL_PRIVACY_CONTROL_URL,
-    DO_NOT_TRACK_URL,
     DEFAULT_FIRST_PARTY_COOKIES_SELF_DESTRUCT_MIN,
     DEFAULT_THIRD_PARTY_COOKIES_SELF_DESTRUCT_MIN,
-} from '../../../constants';
+} from '../../../../common/settings';
 
-const BLOCK_KNOWN_TRACKERS = 'blockKnownTrackers';
+const BlockKnownTrackers = 'blockKnownTrackers';
 const STRIP_TRACKING_PARAMETERS = 'stripTrackingParameters';
 
 const Stealth = observer(() => {
@@ -34,26 +52,26 @@ const Stealth = observer(() => {
     };
 
     const settingChangeHandler = async ({ id, data }) => {
-        log.info(`Setting ${id} set to ${data}`);
+        Log.info(`Setting ${id} set to ${data}`);
         await settingsStore.updateSetting(id, data);
     };
 
     const {
-        DISABLE_STEALTH_MODE,
-        SELF_DESTRUCT_THIRD_PARTY_COOKIES,
-        SELF_DESTRUCT_THIRD_PARTY_COOKIES_TIME,
-        SELF_DESTRUCT_FIRST_PARTY_COOKIES,
-        SELF_DESTRUCT_FIRST_PARTY_COOKIES_TIME,
-        HIDE_REFERRER,
-        HIDE_SEARCH_QUERIES,
-        SEND_DO_NOT_TRACK,
-        BLOCK_WEBRTC,
-        BLOCK_CHROME_CLIENT_DATA,
+        DisableStealthMode,
+        SelfDestructThirdPartyCookies,
+        SelfDestructThirdPartyCookiesTime,
+        SelfDestructFirstPartyCookies,
+        SelfDestructFirstPartyCookiesTime,
+        HideReferrer,
+        HideSearchQueries,
+        SendDoNotTrack,
+        BlockWebRTC,
+        BlockChromeClientData,
     } = settings.names;
 
-    const isStealthModeDisabled = settings.values[DISABLE_STEALTH_MODE];
-    const isThirdPartyCookiesEnabled = settings.values[SELF_DESTRUCT_THIRD_PARTY_COOKIES];
-    const isFirstPartyCookiesEnabled = settings.values[SELF_DESTRUCT_FIRST_PARTY_COOKIES];
+    const isStealthModeDisabled = settings.values[DisableStealthMode];
+    const isThirdPartyCookiesEnabled = settings.values[SelfDestructThirdPartyCookies];
+    const isFirstPartyCookiesEnabled = settings.values[SelfDestructFirstPartyCookies];
 
     return (
         <>
@@ -61,14 +79,14 @@ const Stealth = observer(() => {
                 title={reactTranslator.getMessage('options_privacy_title')}
                 description={reactTranslator.getMessage('options_privacy_desc')}
                 mode="smallContainer"
-                id={DISABLE_STEALTH_MODE}
+                id={DisableStealthMode}
                 inlineControl={(
                     <Setting
-                        id={DISABLE_STEALTH_MODE}
+                        id={DisableStealthMode}
                         type={SETTINGS_TYPES.CHECKBOX}
                         label={reactTranslator.getMessage('options_privacy_title')}
                         inverted
-                        value={settings.values[DISABLE_STEALTH_MODE]}
+                        value={settings.values[DisableStealthMode]}
                         handler={settingChangeHandler}
                     />
                 )}
@@ -84,7 +102,7 @@ const Stealth = observer(() => {
                     description={reactTranslator.getMessage('options_block_known_trackers_description')}
                     disabled={!blockKnownTrackers}
                     sectionDisabled={isStealthModeDisabled}
-                    id={BLOCK_KNOWN_TRACKERS}
+                    id={BlockKnownTrackers}
                     type={SETTINGS_TYPES.CHECKBOX}
                     label={reactTranslator.getMessage('options_block_known_trackers_title')}
                     value={blockKnownTrackers}
@@ -105,12 +123,12 @@ const Stealth = observer(() => {
                 <SettingsSetCheckbox
                     title={reactTranslator.getMessage('options_hide_search_queries_title')}
                     description={reactTranslator.getMessage('options_hide_search_queries_desc')}
-                    disabled={!settings.values[HIDE_SEARCH_QUERIES]}
+                    disabled={!settings.values[HideSearchQueries]}
                     sectionDisabled={isStealthModeDisabled}
-                    id={HIDE_SEARCH_QUERIES}
+                    id={HideSearchQueries}
                     type={SETTINGS_TYPES.CHECKBOX}
                     label={reactTranslator.getMessage('options_hide_search_queries_title')}
-                    value={settings.values[HIDE_SEARCH_QUERIES]}
+                    value={settings.values[HideSearchQueries]}
                     handler={settingChangeHandler}
                 />
                 <SettingsSetCheckbox
@@ -137,12 +155,12 @@ const Stealth = observer(() => {
                             </a>
                         ),
                     })}
-                    disabled={!settings.values[SEND_DO_NOT_TRACK]}
+                    disabled={!settings.values[SendDoNotTrack]}
                     sectionDisabled={isStealthModeDisabled}
-                    id={SEND_DO_NOT_TRACK}
+                    id={SendDoNotTrack}
                     type={SETTINGS_TYPES.CHECKBOX}
                     label={reactTranslator.getMessage('options_send_not_track_title')}
-                    value={settings.values[SEND_DO_NOT_TRACK]}
+                    value={settings.values[SendDoNotTrack]}
                     handler={settingChangeHandler}
                 />
             </SettingsSection>
@@ -157,17 +175,17 @@ const Stealth = observer(() => {
                     description={reactTranslator.getMessage('options_third_party_desc')}
                     disabled={!isThirdPartyCookiesEnabled}
                     sectionDisabled={isStealthModeDisabled}
-                    id={SELF_DESTRUCT_THIRD_PARTY_COOKIES}
+                    id={SelfDestructThirdPartyCookies}
                     type={SETTINGS_TYPES.CHECKBOX}
                     label={reactTranslator.getMessage('options_third_party_title')}
                     value={isThirdPartyCookiesEnabled}
                     handler={settingChangeHandler}
                 >
                     <Setting
-                        id={SELF_DESTRUCT_THIRD_PARTY_COOKIES_TIME}
+                        id={SelfDestructThirdPartyCookiesTime}
                         disabled={!isThirdPartyCookiesEnabled || isStealthModeDisabled}
                         type={SETTINGS_TYPES.INPUT}
-                        value={settings.values[SELF_DESTRUCT_THIRD_PARTY_COOKIES_TIME]}
+                        value={settings.values[SelfDestructThirdPartyCookiesTime]}
                         handler={settingChangeHandler}
                         placeholder={DEFAULT_THIRD_PARTY_COOKIES_SELF_DESTRUCT_MIN}
                     />
@@ -178,17 +196,17 @@ const Stealth = observer(() => {
                     description={reactTranslator.getMessage('options_first_party_desc')}
                     disabled={!isFirstPartyCookiesEnabled}
                     sectionDisabled={isStealthModeDisabled}
-                    id={SELF_DESTRUCT_FIRST_PARTY_COOKIES}
+                    id={SelfDestructFirstPartyCookies}
                     type={SETTINGS_TYPES.CHECKBOX}
                     label={reactTranslator.getMessage('options_first_party_title')}
                     value={isFirstPartyCookiesEnabled}
                     handler={settingChangeHandler}
                 >
                     <Setting
-                        id={SELF_DESTRUCT_FIRST_PARTY_COOKIES_TIME}
+                        id={SelfDestructFirstPartyCookiesTime}
                         disabled={!isFirstPartyCookiesEnabled || isStealthModeDisabled}
                         type={SETTINGS_TYPES.INPUT}
-                        value={settings.values[SELF_DESTRUCT_FIRST_PARTY_COOKIES_TIME]}
+                        value={settings.values[SelfDestructFirstPartyCookiesTime]}
                         handler={settingChangeHandler}
                         placeholder={DEFAULT_FIRST_PARTY_COOKIES_SELF_DESTRUCT_MIN}
                     />
@@ -203,12 +221,12 @@ const Stealth = observer(() => {
                 <SettingsSetCheckbox
                     title={reactTranslator.getMessage('options_hide_referrer_title')}
                     description={reactTranslator.getMessage('options_hide_referrer_desc')}
-                    disabled={!settings.values[HIDE_REFERRER]}
+                    disabled={!settings.values[HideReferrer]}
                     sectionDisabled={isStealthModeDisabled}
-                    id={HIDE_REFERRER}
+                    id={HideReferrer}
                     type={SETTINGS_TYPES.CHECKBOX}
                     label={reactTranslator.getMessage('options_hide_referrer_title')}
-                    value={settings.values[HIDE_REFERRER]}
+                    value={settings.values[HideReferrer]}
                     handler={settingChangeHandler}
                 />
 
@@ -216,12 +234,12 @@ const Stealth = observer(() => {
                     <SettingsSetCheckbox
                         title={reactTranslator.getMessage('options_remove_client_data_title')}
                         description={reactTranslator.getMessage('options_remove_client_data_desc')}
-                        disabled={!settings.values[BLOCK_CHROME_CLIENT_DATA]}
+                        disabled={!settings.values[BlockChromeClientData]}
                         sectionDisabled={isStealthModeDisabled}
-                        id={BLOCK_CHROME_CLIENT_DATA}
+                        id={BlockChromeClientData}
                         type={SETTINGS_TYPES.CHECKBOX}
                         label={reactTranslator.getMessage('options_remove_client_data_title')}
-                        value={settings.values[BLOCK_CHROME_CLIENT_DATA]}
+                        value={settings.values[BlockChromeClientData]}
                         handler={settingChangeHandler}
                     />
                 )}
@@ -229,12 +247,12 @@ const Stealth = observer(() => {
                 <SettingsSetCheckbox
                     title={reactTranslator.getMessage('options_disable_webrtc_title')}
                     description={reactTranslator.getMessage('options_disable_webrtc_desc')}
-                    disabled={!settings.values[BLOCK_WEBRTC]}
+                    disabled={!settings.values[BlockWebRTC]}
                     sectionDisabled={isStealthModeDisabled}
-                    id={BLOCK_WEBRTC}
+                    id={BlockWebRTC}
                     type={SETTINGS_TYPES.CHECKBOX}
                     label={reactTranslator.getMessage('options_disable_webrtc_title')}
-                    value={settings.values[BLOCK_WEBRTC]}
+                    value={settings.values[BlockWebRTC]}
                     handler={settingChangeHandler}
                 />
             </SettingsSection>

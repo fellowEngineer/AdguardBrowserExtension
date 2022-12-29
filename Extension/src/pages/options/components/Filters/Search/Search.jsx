@@ -1,11 +1,33 @@
+/**
+ * @file
+ * This file is part of AdGuard Browser Extension (https://github.com/AdguardTeam/AdguardBrowserExtension).
+ *
+ * AdGuard Browser Extension is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdGuard Browser Extension is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 /* eslint-disable jsx-a11y/no-autofocus */
-import React, { useContext, useRef, useEffect } from 'react';
+import React, {
+    useContext,
+    useRef,
+    useEffect,
+} from 'react';
 import { observer } from 'mobx-react';
 
 import { reactTranslator } from '../../../../../common/translators/reactTranslator';
 import { Select } from '../../../../common/components/ui/Select';
 import { Icon } from '../../../../common/components/ui/Icon';
-import { isMacOs } from '../../../../../common/user-agent-utils';
+import { UserAgent } from '../../../../../common/user-agent';
 import { rootStore } from '../../../stores/RootStore';
 import { SEARCH_FILTERS, TABLET_SCREEN_WIDTH } from './constants';
 
@@ -43,7 +65,7 @@ const Search = observer(() => {
     } = settingsStore;
 
     useEffect(() => {
-        const modifierKeyProperty = isMacOs ? 'metaKey' : 'ctrlKey';
+        const modifierKeyProperty = UserAgent.isMacOs ? 'metaKey' : 'ctrlKey';
         const handleSearchHotkey = (e) => {
             const { code } = e;
             if (e[modifierKeyProperty] && code === 'KeyF') {

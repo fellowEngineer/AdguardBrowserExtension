@@ -1,4 +1,21 @@
-/* eslint-disable max-len */
+/**
+ * @file
+ * This file is part of AdGuard Browser Extension (https://github.com/AdguardTeam/AdguardBrowserExtension).
+ *
+ * AdGuard Browser Extension is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdGuard Browser Extension is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
@@ -39,7 +56,7 @@ export const genCommonConfig = (browserConfig) => {
             minimize: false,
             runtimeChunk: 'single',
         },
-        cache: false,
+        cache: isDev,
         devtool: isDev ? 'eval-source-map' : false,
         entry: {
             'pages/background': {
@@ -126,7 +143,7 @@ export const genCommonConfig = (browserConfig) => {
             filename: '[name].js',
         },
         resolve: {
-            extensions: ['*', '.js', '.jsx'],
+            extensions: ['*', '.js', '.jsx', '.ts', '.tsx'],
             symlinks: false,
             // Node modules polyfills
             fallback: {
@@ -158,7 +175,7 @@ export const genCommonConfig = (browserConfig) => {
                  * by deleting source map url comments in production build
                  */
                 {
-                    test: /\.(js|jsx)$/,
+                    test: /\.(js|ts)x?$/,
                     enforce: 'pre',
                     use: [
                         {
@@ -170,7 +187,7 @@ export const genCommonConfig = (browserConfig) => {
                     ],
                 },
                 {
-                    test: /\.(js|jsx)$/,
+                    test: /\.(js|ts)x?$/,
                     exclude: /node_modules/,
                     use: [{
                         loader: 'babel-loader',
@@ -238,7 +255,13 @@ export const genCommonConfig = (browserConfig) => {
                 ...htmlTemplatePluginCommonOptions,
                 template: path.join(FULLSCREEN_USER_RULES_PATH, 'index.html'),
                 filename: 'pages/fullscreen-user-rules.html',
-                chunks: ['vendors/react', 'vendors/mobx', 'vendors/xstate', 'shared/editor', 'pages/fullscreen-user-rules'],
+                chunks: [
+                    'vendors/react',
+                    'vendors/mobx',
+                    'vendors/xstate',
+                    'shared/editor',
+                    'pages/fullscreen-user-rules',
+                ],
             }),
             new HtmlWebpackPlugin({
                 ...htmlTemplatePluginCommonOptions,

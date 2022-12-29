@@ -63,7 +63,7 @@ Build:
       location: build/beta
       pattern: adguard-api.zip
       shared: true
-      required: true
+      required: false
     - name: build.txt
       location: build/beta
       pattern: build.txt

@@ -1,3 +1,21 @@
+/**
+ * @file
+ * This file is part of AdGuard Browser Extension (https://github.com/AdguardTeam/AdguardBrowserExtension).
+ *
+ * AdGuard Browser Extension is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdGuard Browser Extension is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import { merge } from 'webpack-merge';
 import fs from 'fs';
 import path from 'path';
@@ -8,10 +26,7 @@ import {
     BROWSERS,
     BROWSERS_CONF,
 } from './constants';
-import {
-    LOCALES_ABSOLUTE_PATH,
-    LOCALE_DATA_FILENAME,
-} from './locales/locales-constants';
+import { LOCALES_ABSOLUTE_PATH, LOCALE_DATA_FILENAME } from './locales/locales-constants';
 import packageJson from '../package.json';
 
 const { Redirects } = redirects;
@@ -42,6 +57,7 @@ const getClickToLoadSha = () => {
 
 /**
  * Updates manifest object with new values
+ *
  * @param env
  * @param targetPart
  * @param addedPart
@@ -67,6 +83,7 @@ export const updateManifest = (env, targetPart, addedPart) => {
 
 /**
  * Receives targetPart as a buffer updates it and returns it as a buffer
+ *
  * @param env
  * @param targetPart
  * @param addedPart
@@ -134,8 +151,9 @@ export const chunkArray = (arr, size) => arr.reduce((chunks, el, idx) => {
 
 /**
  * Gets strings for certain locale
+ *
  * @param {string} locale
- * @returns {Object}
+ * @returns {object}
  */
 export const getLocaleTranslations = async (locale) => {
     const filePath = path.join(LOCALES_ABSOLUTE_PATH, locale, LOCALE_DATA_FILENAME);
@@ -145,6 +163,7 @@ export const getLocaleTranslations = async (locale) => {
 
 /**
  * Compares two arrays
+ *
  * @param {Array} arr1
  * @param {Array} arr2
  * @returns {boolean}

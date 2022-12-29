@@ -1,29 +1,34 @@
-/* eslint-disable max-len */
 /**
- * This file is part of Adguard Browser Extension (https://github.com/AdguardTeam/AdguardBrowserExtension).
+ * @file
+ * This file is part of AdGuard Browser Extension (https://github.com/AdguardTeam/AdguardBrowserExtension).
  *
- * Adguard Browser Extension is free software: you can redistribute it and/or modify
+ * AdGuard Browser Extension is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Adguard Browser Extension is distributed in the hope that it will be useful,
+ * AdGuard Browser Extension is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Adguard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
+ * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* eslint-disable max-len */
+
 import { contentPage } from './content-script';
-import { MESSAGE_TYPES } from '../common/constants';
+import { MessageType } from '../common/messages';
+import { messenger } from '../pages/services/messenger';
+import { SettingOption } from '../background/schema';
 
 export const contentUtils = (function () {
     const MAX_Z_INDEX = '2147483647';
 
     /**
      * Create style element with provided css
+     *
      * @param css
      * @returns {any | HTMLElement}
      */
@@ -36,6 +41,7 @@ export const contentUtils = (function () {
 
     /**
      * Creates iframe and appends it after target open tag
+     *
      * @param target Node where to append iframe with html
      * @param html html string to write inside iframe
      * @param alertStyles popup styles text
@@ -57,6 +63,7 @@ export const contentUtils = (function () {
 
     /**
      * Creates div and appends it to the page
+     *
      * @param target
      * @param html
      * @returns {any | HTMLElement}
@@ -71,6 +78,7 @@ export const contentUtils = (function () {
 
     /**
      * If isAdguardTab we append div, else we append iframe
+     *
      * @param target
      * @param html
      * @param isAdguardTab
@@ -90,6 +98,7 @@ export const contentUtils = (function () {
 
     /**
      * Generates alert html
+     *
      * @param {string} title
      * @param {string} text
      * @returns {string}
@@ -209,7 +218,7 @@ export const contentUtils = (function () {
             showPromoNotification,
             disableNotificationText,
             alertStyles,
-            updateIframeStyles,
+            updateContainerStyles,
         } = message;
 
         const updateIframeHtml = `
@@ -253,16 +262,14 @@ export const contentUtils = (function () {
                     element.addEventListener('click', () => {
                         if (element.classList.contains('disable-notifications')) {
                             // disable update notifications
-                            contentPage.sendMessage({
-                                type: MESSAGE_TYPES.CHANGE_USER_SETTING,
-                                key: 'show-app-updated-disabled',
+                            messenger.sendMessage(MessageType.ChangeUserSettings, {
+                                key: SettingOption.DisableShowAppUpdatedNotification,
                                 value: true,
                             });
                         }
                         if (showPromoNotification
                             && element.classList.contains('set-notification-viewed')) {
-                            contentPage.sendMessage({
-                                type: 'setNotificationViewed',
+                            messenger.sendMessage(MessageType.SetNotificationViewed, {
                                 withDelay: false,
                             });
                         }
@@ -286,7 +293,7 @@ export const contentUtils = (function () {
             }
 
             if (document.body && !isAdguardTab) {
-                const updateIframeCss = createStyleElement(updateIframeStyles);
+                const updateIframeCss = createStyleElement(updateContainerStyles);
                 document.body.insertAdjacentElement('afterbegin', updateIframeCss);
 
                 const iframe = appendIframe(document.body, updateIframeHtml, alertStyles);

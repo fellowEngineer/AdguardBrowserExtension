@@ -1,7 +1,21 @@
-/* eslint-disable
-    react/jsx-props-no-spreading,
-    jsx-a11y/no-static-element-interactions,
-    jsx-a11y/click-events-have-key-events */
+/**
+ * @file
+ * This file is part of AdGuard Browser Extension (https://github.com/AdguardTeam/AdguardBrowserExtension).
+ *
+ * AdGuard Browser Extension is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdGuard Browser Extension is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import React, {
     useCallback,
     useContext,
@@ -19,7 +33,7 @@ import throttle from 'lodash/throttle';
 import { rootStore } from '../../stores/RootStore';
 import { getRequestEventType } from '../RequestWizard/utils';
 import { reactTranslator } from '../../../../common/translators/reactTranslator';
-import { ANTIBANNER_FILTERS_ID, SCROLLBAR_WIDTH } from '../../../../common/constants';
+import { AntiBannerFiltersId, SCROLLBAR_WIDTH } from '../../../../common/constants';
 import { FilteringEventsEmpty } from './FilteringEventsEmpty';
 import { optionsStorage } from '../../../options/options-storage';
 import { passiveEventSupported } from '../../../helpers';
@@ -49,7 +63,7 @@ const filterNameAccessor = (props) => {
 };
 
 /**
- * @typedef {Object} RowClassName
+ * @typedef {object} RowClassName
  * @property {string} YELLOW
  * @property {string} RED
  * @property {string} GREEN
@@ -107,7 +121,7 @@ const ruleAccessor = (props) => {
 
     let ruleText = '';
     if (requestRule) {
-        if (requestRule.filterId === ANTIBANNER_FILTERS_ID.ALLOWLIST_FILTER_ID) {
+        if (requestRule.filterId === AntiBannerFiltersId.AllowlistFilterId) {
             ruleText = reactTranslator.getMessage('filtering_log_in_allowlist');
         } else {
             ruleText = requestRule.ruleText;

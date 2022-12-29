@@ -1,3 +1,21 @@
+/**
+ * @file
+ * This file is part of AdGuard Browser Extension (https://github.com/AdguardTeam/AdguardBrowserExtension).
+ *
+ * AdGuard Browser Extension is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdGuard Browser Extension is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import React, {
     useContext,
     useEffect,
@@ -7,7 +25,7 @@ import React, {
 import { observer } from 'mobx-react';
 import { Range } from 'ace-builds';
 import debounce from 'lodash/debounce';
-import { SimpleRegex } from '@adguard/tsurlfilter/dist/es/simple-regex';
+import { SimpleRegex } from '@adguard/tsurlfilter';
 
 import { userRulesEditorStore } from './UserRulesEditorStore';
 import { Editor } from '../Editor';
@@ -17,10 +35,11 @@ import { Popover } from '../ui/Popover';
 import { Checkbox } from '../ui/Checkbox';
 import { Icon } from '../ui/Icon';
 import { messenger } from '../../../services/messenger';
-import { MESSAGE_TYPES, NOTIFIER_TYPES } from '../../../../common/constants';
+import { MessageType } from '../../../../common/messages';
+import { NotifierType } from '../../../../common/constants';
 import { HANDLER_DELAY_MS } from '../../constants';
 import { handleFileUpload } from '../../../helpers';
-import { log } from '../../../../common/log';
+import { Log } from '../../../../common/log';
 import { ToggleWrapButton } from './ToggleWrapButton';
 import { exportData, ExportTypes } from '../../utils/export';
 
@@ -47,7 +66,7 @@ export const UserRulesEditor = observer(({ fullscreen, uiStore }) => {
             await store.requestSettingsData();
 
             const events = [
-                NOTIFIER_TYPES.SETTING_UPDATED,
+                NotifierType.SettingUpdated,
             ];
             removeListenerCallback = await messenger.createEventListener(
                 events,
@@ -55,12 +74,12 @@ export const UserRulesEditor = observer(({ fullscreen, uiStore }) => {
                     const { type } = message;
 
                     switch (type) {
-                        case NOTIFIER_TYPES.SETTING_UPDATED: {
+                        case NotifierType.SettingUpdated: {
                             await store.requestSettingsData();
                             break;
                         }
                         default: {
-                            log.debug('Undefined message type:', type);
+                            Log.debug('Undefined message type:', type);
                             break;
                         }
                     }
@@ -95,7 +114,7 @@ export const UserRulesEditor = observer(({ fullscreen, uiStore }) => {
 
             // initial export button state
             const { userRules } = await messenger.sendMessage(
-                MESSAGE_TYPES.GET_USER_RULES_EDITOR_DATA,
+                MessageType.GetUserRulesEditorData,
             );
             if (userRules.length > 0) {
                 store.setUserRulesExportAvailableState(true);
@@ -108,11 +127,12 @@ export const UserRulesEditor = observer(({ fullscreen, uiStore }) => {
     /**
      * One of the reasons for request filter to update
      * may be adding user rules from other places like assistant and others
-     * @return {Promise<void>}
+     *
+     * @returns {Promise<void>}
      */
     const handleUserFilterUpdated = useCallback(async () => {
         const { userRules } = await messenger.sendMessage(
-            MESSAGE_TYPES.GET_USER_RULES_EDITOR_DATA,
+            MessageType.GetUserRulesEditorData,
         );
 
         if (!store.userRulesEditorContentChanged) {
@@ -139,7 +159,7 @@ export const UserRulesEditor = observer(({ fullscreen, uiStore }) => {
             // Subscribe to events of request filter update
             // to have actual user rules in the editor
             const events = [
-                NOTIFIER_TYPES.USER_FILTER_UPDATED,
+                NotifierType.userFilterUpdated,
             ];
 
             removeListenerCallback = await messenger.createEventListener(
@@ -148,12 +168,12 @@ export const UserRulesEditor = observer(({ fullscreen, uiStore }) => {
                     const { type } = message;
 
                     switch (type) {
-                        case NOTIFIER_TYPES.USER_FILTER_UPDATED: {
+                        case NotifierType.userFilterUpdated: {
                             await handleUserFilterUpdated();
                             break;
                         }
                         default: {
-                            log.debug('Undefined message type:', type);
+                            Log.debug('Undefined message type:', type);
                             break;
                         }
                     }
@@ -227,7 +247,7 @@ export const UserRulesEditor = observer(({ fullscreen, uiStore }) => {
                 await store.saveUserRules(rulesUnionString);
             }
         } catch (e) {
-            log.debug(e.message);
+            Log.debug(e.message);
             if (uiStore?.addNotification) {
                 uiStore.addNotification({ description: e.message });
             }
@@ -308,7 +328,7 @@ export const UserRulesEditor = observer(({ fullscreen, uiStore }) => {
             await messenger.setEditorStorageContent(content);
         }
 
-        await messenger.sendMessage(MESSAGE_TYPES.OPEN_FULLSCREEN_USER_RULES);
+        await messenger.sendMessage(MessageType.OpenFullscreenUserRules);
     };
 
     const closeEditorFullscreen = async () => {
