@@ -16,12 +16,14 @@
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+
 import c3 from 'c3';
 import 'c3/c3.css';
 
 import { reactTranslator } from '../../../../../common/translators/reactTranslator';
-import { TIME_RANGES } from '../../../constants';
+import { TimeRange } from '../../../constants';
+import { useObservePopupHeight, POPUP_DEFAULT_HEIGHT } from '../../../hooks/useObservePopupHeight';
 
 import './chart.pcss';
 
@@ -61,22 +63,22 @@ const monthsAsString = (monthIndex) => {
 const selectRequestsStatsData = (stats, range, type) => {
     const result = [];
     switch (range) {
-        case TIME_RANGES.DAY:
+        case TimeRange.Day:
             stats.today.forEach((d) => {
                 result.push(d[type]);
             });
             break;
-        case TIME_RANGES.WEEK:
+        case TimeRange.Week:
             stats.lastWeek.forEach((d) => {
                 result.push(d[type]);
             });
             break;
-        case TIME_RANGES.MONTH:
+        case TimeRange.Month:
             stats.lastMonth.forEach((d) => {
                 result.push(d[type]);
             });
             break;
-        case TIME_RANGES.YEAR:
+        case TimeRange.Year:
             stats.lastYear.forEach((d) => {
                 result.push(d[type]);
             });
@@ -102,7 +104,7 @@ const getCategoriesLines = (statsData, range) => {
     const MONTHS_PER_YEAR = 12;
 
     switch (range) {
-        case TIME_RANGES.DAY:
+        case TimeRange.Day:
             for (let i = 1; i <= HOURS_PER_DAY; i += 1) {
                 if (i % 3 === 0) {
                     const hour = (i + now.getHours()) % HOURS_PER_DAY;
@@ -115,7 +117,7 @@ const getCategoriesLines = (statsData, range) => {
                 }
             }
             break;
-        case TIME_RANGES.WEEK:
+        case TimeRange.Week:
             for (let i = 0; i < DAYS_PER_WEEK; i += 1) {
                 categories.push(dayOfWeekAsString((day + i) % DAYS_PER_WEEK));
                 lines.push({
@@ -123,7 +125,7 @@ const getCategoriesLines = (statsData, range) => {
                 });
             }
             break;
-        case TIME_RANGES.MONTH:
+        case TimeRange.Month:
             for (let i = 0; i <= DAYS_PER_MONTH; i += 1) {
                 if (i % 3 === 0) {
                     const c = ((i + now.getDate()) % lastDayOfPrevMonth) + 1;
@@ -136,7 +138,7 @@ const getCategoriesLines = (statsData, range) => {
                 }
             }
             break;
-        case TIME_RANGES.YEAR:
+        case TimeRange.Year:
             for (let i = 0; i <= MONTHS_PER_YEAR; i += 1) {
                 categories.push(monthsAsString((month + i) % MONTHS_PER_YEAR));
                 categories = categories.slice(-statsData.length);
@@ -155,7 +157,45 @@ const getCategoriesLines = (statsData, range) => {
     };
 };
 
-export const Chart = ({ stats, range, type }) => {
+/**
+ * Calculate chart height based on popup height.
+ *
+ * Adjust height of chart proportionally if actual height of popup (popupHeight)
+ * becomes smaller that default height of popup in desktops (POPUP_DEFAULT_HEIGHT).
+ * Design specified height with value DEFAULT_CHART_HEIGHT will be base
+ * with min MIN_CHART_HEIGHT height.
+ * This is needed for extension running on mobile browsers where popup height is dynamic.
+ *
+ * @param popupHeight Height of the popup (Default: window.innerHeight).
+ *
+ * @returns Height of the chart.
+ */
+const calculateChartHeight = (popupHeight = window.innerHeight) => {
+    /**
+     * Default size of chart in desktop extension.
+     */
+    const DEFAULT_CHART_HEIGHT = 218;
+
+    /**
+     * Min height of chart.
+     */
+    const MIN_CHART_HEIGHT = 168;
+
+    return Math.max(
+        MIN_CHART_HEIGHT,
+        DEFAULT_CHART_HEIGHT - (POPUP_DEFAULT_HEIGHT - popupHeight),
+    );
+};
+
+export const Chart = ({
+    stats,
+    range,
+    type,
+    small,
+    isAndroidBrowser,
+}) => {
+    const [chartHeight, setChartHeight] = useState(calculateChartHeight());
+
     useEffect(() => {
         const statsData = selectRequestsStatsData(stats, range, type);
         const categoriesLines = getCategoriesLines(statsData, range);
@@ -168,10 +208,16 @@ export const Chart = ({ stats, range, type }) => {
             + '  <stop offset="100%" style="stop-color:#65BDA8;stop-opacity:1" />'
             + '</linearGradient>';
 
+        /**
+         * Amount of pixel to subtract from chart height.
+         * 40px is based on height of one action button.
+         */
+        const heightDiff = small ? 40 : 0;
+
         c3.generate({
             bindTo: '#chart',
             size: {
-                height: 230,
+                height: chartHeight - heightDiff,
             },
             data: {
                 columns: [
@@ -248,7 +294,28 @@ export const Chart = ({ stats, range, type }) => {
                 this.svg[0][0].getElementsByTagName('defs')[0].innerHTML += grad1;
             },
         });
-    }, [range, type, stats]);
+    }, [range, type, stats, small, chartHeight]);
 
-    return <div className="chart" id="chart" />;
+    /**
+     * Handle popup resize.
+     *
+     * @param newPopupHeight New height of the popup.
+     */
+    const handleResize = (newPopupHeight) => {
+        setChartHeight(calculateChartHeight(newPopupHeight));
+    };
+
+    /**
+     * Handle popup resize cleanup.
+     */
+    const handleCleanUp = () => {
+        setChartHeight(calculateChartHeight());
+    };
+
+    /**
+     * Update chart height on Android browsers based on window height.
+     */
+    useObservePopupHeight(isAndroidBrowser, handleResize, handleCleanUp);
+
+    return <div className="chart" id="chart" aria-hidden="true" />;
 };

@@ -15,58 +15,86 @@
  * You should have received a copy of the GNU General Public License
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
-import browser, { Runtime } from 'webextension-polyfill';
-import { listeners } from '../notifier';
+import browser, { type Runtime } from 'webextension-polyfill';
+
+import { notifier } from '../notifier';
 import { messageHandler } from '../message-handler';
 import {
-    RemoveListenerMessage,
-    CreateEventListenerMessage,
+    type RemoveListenerMessage,
+    type CreateEventListenerMessage,
     MessageType,
+    type NotifyListenersMessage,
 } from '../../common/messages';
 
 export type CreateEventListenerResponse = {
-    listenerId: number,
+    listenerId: number;
 };
 
-export class EventService {
+/**
+ * The EventService class operates with event listeners: creates or removes them.
+ */
+class EventService {
     // TODO: types
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private eventListeners = new Map<number, any>();;
+    private eventListeners = new Map<number, any>();
 
+    /**
+     * Creates new {@link EventService}.
+     */
     constructor() {
         this.createEventListener = this.createEventListener.bind(this);
         this.removeEventListener = this.removeEventListener.bind(this);
     }
 
+    /**
+     * Registers event listeners in the {@link messageHandler} with background messages.
+     */
     public init(): void {
         messageHandler.addListener(MessageType.CreateEventListener, this.createEventListener);
         messageHandler.addListener(MessageType.RemoveListener, this.removeEventListener);
     }
 
+    /**
+     * Creates new event listener and returs its id.
+     *
+     * @param message Item of {@link CreateEventListenerMessage}.
+     * @param sender Item of {@link Runtime.MessageSender}.
+     *
+     * @returns The identifier of the event listener enclosed in the {@link CreateEventListenerResponse} type.
+     */
     private createEventListener(
         message: CreateEventListenerMessage,
         sender: Runtime.MessageSender,
     ): CreateEventListenerResponse {
         const { events } = message.data;
 
-        const listenerId = listeners.addSpecifiedListener(events, (...args) => {
+        const listenerId = notifier.addSpecifiedListener(events, (...data) => {
             const sender = this.eventListeners.get(listenerId);
-            if (sender) {
-                browser.tabs.sendMessage(sender.tab.id, {
-                    type: MessageType.NotifyListeners,
-                    data: args,
-                });
+            if (!sender) {
+                return;
             }
+
+            const message: NotifyListenersMessage = {
+                type: MessageType.NotifyListeners,
+                data,
+            };
+
+            browser.tabs.sendMessage(sender.tab.id, message);
         });
 
         this.eventListeners.set(listenerId, sender);
         return { listenerId };
     }
 
+    /**
+     * Removes listener for provided message.
+     *
+     * @param message Message of type {@link RemoveListenerMessage}.
+     */
     private removeEventListener(message: RemoveListenerMessage): void {
         const { listenerId } = message.data;
 
-        listeners.removeListener(listenerId);
+        notifier.removeListener(listenerId);
         this.eventListeners.delete(listenerId);
     }
 }

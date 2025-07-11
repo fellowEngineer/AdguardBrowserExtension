@@ -19,17 +19,20 @@
 import { validator } from '@adguard/translate';
 
 import { cliLog } from '../cli-log';
-
 import { getLocaleTranslations, areArraysEqual } from '../helpers';
 
 import {
     BASE_LOCALE,
-    LANGUAGES,
+    LOCALE_PAIRS,
+    LOCALES,
     REQUIRED_LOCALES,
     THRESHOLD_PERCENTAGE,
 } from './locales-constants';
 
-const LOCALES = Object.keys(LANGUAGES);
+/**
+ * Marker for text max length in description.
+ */
+const TEXT_MAX_LENGTH_MARKER = 'TEXT MAX LENGTH:';
 
 /**
  * @typedef Result
@@ -86,17 +89,100 @@ const printCriticalResults = (criticals) => {
     });
 };
 
-const validateMessage = (baseKey, baseLocaleTranslations, localeTranslations) => {
+/**
+ * Normalizes locale code before validation.
+ *
+ * @param {string} rawLocale Locale code to normalize.
+ *
+ * @returns {string} Normalized locale code.
+ *
+ * @example
+ * 'pt_BR' -> 'pt_br'
+ * 'es_419' -> 'es'
+ * 'sr-Latn' -> 'sr_latn'
+ */
+const normalizeLocale = (rawLocale) => {
+    // locale should be lowercase, e.g. 'pt_br', not 'pt_BR'
+    // and with underscore, not dash, e.g. 'sr_latn', not 'sr-latn'
+    const locale = rawLocale.toLowerCase().replace('-', '_');
+
+    return LOCALE_PAIRS[locale] || locale;
+};
+
+/**
+ * Validates the length of the translated string
+ * against the `TEXT MAX LENGTH:` marker in the base description.
+ *
+ * @param {string} baseDescriptionValue Base description value.
+ * @param {string} localeMessageValue Translated message value.
+ *
+ * @returns {string | null} Error message if the length is invalid, otherwise null.
+ */
+const validateTranslatedLength = (baseDescriptionValue, localeMessageValue) => {
+    if (!baseDescriptionValue) {
+        return null;
+    }
+
+    if (!baseDescriptionValue.includes(TEXT_MAX_LENGTH_MARKER)) {
+        return null;
+    }
+
+    const markerIndex = baseDescriptionValue.indexOf(TEXT_MAX_LENGTH_MARKER);
+    if (markerIndex === -1) {
+        return null;
+    }
+
+    const lengthStr = baseDescriptionValue.slice(markerIndex + TEXT_MAX_LENGTH_MARKER.length).trim();
+    const maxLength = Number(lengthStr);
+    if (Number.isNaN(maxLength)) {
+        return `Invalid max length value: ${lengthStr}`;
+    }
+
+    if (maxLength && localeMessageValue.length > maxLength) {
+        return `Text length is more than allowed ${maxLength} characters, actual: ${localeMessageValue.length}`;
+    }
+
+    return null;
+};
+
+/**
+ * Validates that localized string correspond by structure to base locale string.
+ *
+ * @param {string} baseKey Key of the base locale string.
+ * @param {object} baseLocaleTranslations Translations of the base locale.
+ * @param {string} rawLocale Locale to validate.
+ * @param {object} localeTranslations Translations of the locale to validate.
+ *
+ * @returns {object} Validation result if error occurred, otherwise undefined.
+ */
+const validateMessage = (baseKey, baseLocaleTranslations, rawLocale, localeTranslations) => {
     const baseMessageValue = baseLocaleTranslations[baseKey].message;
+    const baseDescriptionValue = baseLocaleTranslations[baseKey].description;
     const localeMessageValue = localeTranslations[baseKey].message;
+
+    const lengthValidationError = validateTranslatedLength(baseDescriptionValue, localeMessageValue);
+    if (lengthValidationError) {
+        return {
+            key: baseKey,
+            error: lengthValidationError,
+        };
+    }
+
+    const locale = normalizeLocale(rawLocale);
+
+    let validation;
     try {
-        const isTranslationValid = validator.isTranslationValid(baseMessageValue, localeMessageValue);
-        if (!isTranslationValid) {
-            throw new Error('Invalid translated string');
+        if (!validator.isTranslationValid(
+            baseMessageValue,
+            localeMessageValue,
+            locale,
+        )) {
+            throw new Error('Invalid translation');
         }
     } catch (error) {
-        return { key: baseKey, error };
+        validation = { key: baseKey, error };
     }
+    return validation;
 };
 
 /**
@@ -111,6 +197,7 @@ const validateMessage = (baseKey, baseLocaleTranslations, localeTranslations) =>
  *
  * @param {string[]} locales - list of locales
  * @param {ValidationFlags} flags
+ *
  * @returns {Result[]} array of object with such properties:
  * locale, level of translation readiness, untranslated strings array and array of invalid translations
  */
@@ -131,7 +218,7 @@ export const checkTranslations = async (locales, flags) => {
             if (!localeMessages.includes(baseKey)) {
                 untranslatedStrings.push(baseKey);
             } else {
-                const validationError = validateMessage(baseKey, baseLocaleTranslations, localeTranslations);
+                const validationError = validateMessage(baseKey, baseLocaleTranslations, locale, localeTranslations);
                 if (validationError) {
                     invalidTranslations.push(validationError);
                 }

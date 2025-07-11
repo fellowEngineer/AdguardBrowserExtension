@@ -28,94 +28,105 @@ import {
     WEBSITE_URL,
     DISCUSS_URL,
 } from '../../constants';
-import { reactTranslator } from '../../../../common/translators/reactTranslator';
+import { translator } from '../../../../common/translators/translator';
 
 import './about-page.pcss';
 
 const About = observer(() => {
     const { settingsStore } = useContext(rootStore);
 
-    const { version } = settingsStore;
+    const { version, libVersions } = settingsStore;
 
     if (!version) {
         return null;
     }
 
     const currentYear = new Date().getFullYear();
-    const copyRightText = `© 2009-${currentYear} AdGuard Software Ltd.`;
+    const copyRightText = `© 2009-${currentYear} Adguard Software Ltd.`;
 
     return (
         <>
             <div className="title__container title__container--about">
                 <h2 className="title">
-                    {reactTranslator.getMessage('options_about')}
+                    {translator.getMessage('options_about')}
                 </h2>
             </div>
             <div className="about">
                 <div className="about__title">
-                    {reactTranslator.getMessage('options_about_title')}
+                    {translator.getMessage('options_about_title')}
                 </div>
                 <div className="about__version">
-                    {reactTranslator.getMessage('options_about_version')}
-                    {' '}
-                    {version}
+                    {`${translator.getMessage('options_about_version')} ${version}`}
+                    <p>
+                        {`TSWebExtension v${libVersions.tswebextension}`}
+                        <br />
+                        {`TSUrlFilter v${libVersions.tsurlfilter}`}
+                        <br />
+                        {`Scriptlets v${libVersions.scriptlets}`}
+                        <br />
+                        {`ExtendedCss v${libVersions.extendedCss}`}
+                        {libVersions.dnrRulesets && (
+                            <>
+                                <br />
+                                {`DNR rulesets v${libVersions.dnrRulesets}`}
+                            </>
+                        )}
+                    </p>
                 </div>
                 <div className="about__copyright">
-                    <div className="about__copyright-item">
-                        {copyRightText}
-                    </div>
-                    <div className="about__copyright-item">
-                        {reactTranslator.getMessage('options_copyright')}
-                    </div>
+                    {copyRightText}
+                    {/* Hide following br tag so Screen Reader will read text together */}
+                    <br aria-hidden="true" />
+                    {translator.getMessage('options_copyright')}
                 </div>
                 <div className="links-menu">
                     <a
                         target="_blank"
                         rel="noopener noreferrer"
                         href={CHANGELOG_URL}
-                        className="links-menu__item"
+                        className="links-menu__item button--link--green"
                     >
-                        {reactTranslator.getMessage('options_open_changelog')}
+                        {translator.getMessage('options_open_changelog')}
                     </a>
                     <a
                         target="_blank"
                         rel="noopener noreferrer"
                         href={PRIVACY_URL}
-                        className="links-menu__item"
+                        className="links-menu__item button--link--green"
                     >
-                        {reactTranslator.getMessage('options_privacy_policy')}
+                        {translator.getMessage('options_privacy_policy')}
                     </a>
                     <a
                         target="_blank"
                         rel="noopener noreferrer"
                         href={WEBSITE_URL}
-                        className="links-menu__item"
+                        className="links-menu__item button--link--green"
                     >
-                        {reactTranslator.getMessage('options_site')}
+                        {translator.getMessage('options_site')}
                     </a>
                     <a
                         target="_blank"
                         rel="noopener noreferrer"
                         href={DISCUSS_URL}
-                        className="links-menu__item"
+                        className="links-menu__item button--link--green"
                     >
-                        {reactTranslator.getMessage('options_discuss')}
+                        {translator.getMessage('options_discuss')}
                     </a>
                     <a
                         target="_blank"
                         rel="noopener noreferrer"
                         href={ACKNOWLEDGMENTS_URL}
-                        className="links-menu__item"
+                        className="links-menu__item button--link--green"
                     >
-                        {reactTranslator.getMessage('options_acknowledgment')}
+                        {translator.getMessage('options_acknowledgment')}
                     </a>
                     <a
                         target="_blank"
                         rel="noopener noreferrer"
                         href={GITHUB_URL}
-                        className="links-menu__item"
+                        className="links-menu__item button--link--green"
                     >
-                        {reactTranslator.getMessage('options_github')}
+                        {translator.getMessage('options_github')}
                     </a>
                 </div>
             </div>

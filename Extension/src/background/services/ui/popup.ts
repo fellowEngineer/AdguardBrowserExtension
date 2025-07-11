@@ -15,82 +15,128 @@
  * You should have received a copy of the GNU General Public License
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
-import { tabsApi as tsWebExtTabApi } from '@adguard/tswebextension';
+import { RulesLimitsService } from 'rules-limits-service';
 
+import { tabsApi as tsWebExtTabsApi } from '../../tswebextension';
 import {
-    ChangeApplicationFilteringDisabledMessage,
-    GetTabInfoForPopupMessage,
+    type ChangeApplicationFilteringPausedMessage,
+    type GetTabInfoForPopupMessage,
     MessageType,
 } from '../../../common/messages';
 import { messageHandler } from '../../message-handler';
 import { SettingOption } from '../../schema';
 import { UserAgent } from '../../../common/user-agent';
-import { settingsStorage, Notification } from '../../storages';
 import {
-    FrameData,
+    appContext,
+    AppContextKey,
+    settingsStorage,
+    type PromoNotification,
+} from '../../storages';
+import {
+    type FrameData,
     FramesApi,
     PageStatsApi,
     SettingsApi,
-    notificationApi,
+    promoNotificationApi,
+    type GetStatisticsDataResponse,
+    type SettingsData,
     UserRulesApi,
-    GetStatisticsDataResponse,
-    SettingsData,
 } from '../../api';
 
+// TODO: describe all properties
+/**
+ * Tab info for the popup.
+ */
 export type GetTabInfoForPopupResponse = {
-    frameInfo: FrameData,
-    stats: GetStatisticsDataResponse,
-    settings: SettingsData,
+    frameInfo: FrameData;
+    stats: GetStatisticsDataResponse;
+    settings: SettingsData;
+    areFilterLimitsExceeded: boolean;
     options: {
-        showStatsSupported: boolean,
-        isFirefoxBrowser: boolean
-        showInfoAboutFullVersion: boolean
-        isMacOs: boolean,
-        isEdgeBrowser: boolean,
-        notification: Notification | null,
-        isDisableShowAdguardPromoInfo: boolean,
-        hasCustomRulesToReset: boolean,
-    },
+        showStatsSupported: boolean;
+        isFirefoxBrowser: boolean;
+        showInfoAboutFullVersion: boolean;
+        isMacOs: boolean;
+        isEdgeBrowser: boolean;
+        notification: PromoNotification | null;
+        isDisableShowAdguardPromoInfo: boolean;
+        hasUserRulesToReset: boolean;
+    };
 };
 
+/**
+ * Handles work with popups.
+ */
 export class PopupService {
+    /**
+     * Creates listeners for getter of tab info and for popup.
+     */
     static init(): void {
+        messageHandler.addListener(MessageType.GetIsEngineStarted, PopupService.getIsAppInitialized);
         messageHandler.addListener(MessageType.GetTabInfoForPopup, PopupService.getTabInfoForPopup);
         messageHandler.addListener(
-            MessageType.ChangeApplicationFilteringDisabled,
-            PopupService.onChangeFilteringDisable,
+            MessageType.ChangeApplicationFilteringPaused,
+            PopupService.onChangeFilteringPaused,
         );
     }
 
-    static async getTabInfoForPopup({
-        data,
-    }: GetTabInfoForPopupMessage): Promise<GetTabInfoForPopupResponse | undefined> {
+    /**
+     * Returns the state of the application initialization.
+     *
+     * @returns True if the application is initialized, false otherwise.
+     */
+    static getIsAppInitialized(): boolean {
+        return appContext.get(AppContextKey.IsInit);
+    }
+
+    /**
+     * Returns tab info: frame info, stats form {@link PageStatsApi},
+     * current settings and some other options.
+     *
+     * @param message Message of type {@link GetTabInfoForPopupMessage}.
+     * @param message.data Contains tab id.
+     *
+     * @returns If found - tab context {@link GetTabInfoForPopupResponse},
+     * or undefined if not found.
+     */
+    static async getTabInfoForPopup(
+        { data }: GetTabInfoForPopupMessage,
+    ): Promise<GetTabInfoForPopupResponse | undefined> {
         const { tabId } = data;
 
-        const tabContext = tsWebExtTabApi.getTabContext(tabId);
+        const tabContext = tsWebExtTabsApi.getTabContext(tabId);
 
         if (tabContext) {
             return {
                 frameInfo: FramesApi.getMainFrameData(tabContext),
                 stats: PageStatsApi.getStatisticsData(),
                 settings: SettingsApi.getData(),
+                areFilterLimitsExceeded: __IS_MV3__
+                    ? await RulesLimitsService.areFilterLimitsExceeded()
+                    : false,
                 options: {
                     showStatsSupported: true,
                     isFirefoxBrowser: UserAgent.isFirefox,
                     showInfoAboutFullVersion: !settingsStorage.get(SettingOption.DisableShowAdguardPromoInfo),
                     isMacOs: UserAgent.isMacOs,
                     isEdgeBrowser: UserAgent.isEdge || UserAgent.isEdgeChromium,
-                    notification: await notificationApi.getCurrentNotification(),
+                    notification: await promoNotificationApi.getCurrentNotification(),
                     isDisableShowAdguardPromoInfo: settingsStorage.get(SettingOption.DisableShowAdguardPromoInfo),
-                    hasCustomRulesToReset: await UserRulesApi.hasRulesForUrl(tabContext.info.url),
+                    hasUserRulesToReset: await UserRulesApi.hasRulesForUrl(tabContext.info.url),
                 },
             };
         }
     }
 
-    private static async onChangeFilteringDisable({ data }: ChangeApplicationFilteringDisabledMessage): Promise<void> {
-        const { state: disabled } = data;
+    /**
+     * Called when protection pausing or resuming is requested.
+     *
+     * @param message Message of {@link ChangeApplicationFilteringPausedMessage}.
+     * @param message.data State of protection.
+     */
+    private static async onChangeFilteringPaused({ data }: ChangeApplicationFilteringPausedMessage): Promise<void> {
+        const { state } = data;
 
-        await SettingsApi.setSetting(SettingOption.DisableFiltering, disabled);
+        await SettingsApi.setSetting(SettingOption.DisableFiltering, state);
     }
 }

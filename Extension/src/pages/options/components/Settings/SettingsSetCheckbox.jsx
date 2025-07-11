@@ -17,7 +17,10 @@
  */
 
 import React from 'react';
+
+import cn from 'classnames';
 import PropTypes from 'prop-types';
+
 import { Setting, SETTINGS_TYPES } from './Setting';
 import { SettingsSet } from './SettingsSet';
 
@@ -26,15 +29,19 @@ const SettingsSetCheckbox = (props) => {
     const {
         title, description, children, disabled,
         id, handler, label, inverted, value, sectionDisabled,
+        className,
     } = props;
+
+    const titleId = `${id}-title`;
 
     return (
         <label
             htmlFor={id}
-            className="setting-checkbox"
+            className={cn('setting-checkbox', className)}
         >
             <SettingsSet
                 title={title}
+                titleId={titleId}
                 description={description}
                 disabled={disabled}
                 inlineControl={(
@@ -43,6 +50,7 @@ const SettingsSetCheckbox = (props) => {
                         type={SETTINGS_TYPES.CHECKBOX}
                         inverted={inverted}
                         label={label}
+                        labelId={titleId}
                         handler={handler}
                         value={value}
                         disabled={sectionDisabled}
@@ -55,8 +63,13 @@ const SettingsSetCheckbox = (props) => {
     );
 };
 
+SettingsSetCheckbox.defaultProps = {
+    className: '',
+};
+
 SettingsSetCheckbox.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    className: PropTypes.string,
 };
 
 export { SettingsSetCheckbox };

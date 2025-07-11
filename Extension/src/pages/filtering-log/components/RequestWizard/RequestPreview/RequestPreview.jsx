@@ -22,9 +22,12 @@ import React, {
     useEffect,
 } from 'react';
 import { observer } from 'mobx-react';
+
+import { fromPromise } from 'xstate';
 import { useMachine } from '@xstate/react';
 
-import { RequestType } from '../../../../../common/constants';
+import { ContentType as RequestType } from 'tswebextension';
+
 import { Icon } from '../../../../common/components/ui/Icon';
 import { reactTranslator } from '../../../../../common/translators/reactTranslator';
 import {
@@ -33,12 +36,13 @@ import {
     FetchStates,
 } from '../../../../common/machines/fetchMachine';
 import { rootStore } from '../../../stores/RootStore';
+
 import { ImageRequest } from './ImageRequest';
 import { TextRequest } from './TextRequest';
 import { fetchText, fetchImage } from './fetchers';
 
-import './request-preview.pcss';
 import '../RequestInfo/request-image.pcss';
+import './request-preview.pcss';
 
 export const RequestPreview = observer(() => {
     const {
@@ -67,20 +71,28 @@ export const RequestPreview = observer(() => {
         return null;
     };
 
-    const [previewState, send] = useMachine(fetchMachine, {
-        services: {
-            fetchData: getFetcher(),
-        },
-    });
+    const [previewState, send] = useMachine(
+        fetchMachine.provide({
+            actors: {
+                fetchData: fromPromise(getFetcher()),
+            },
+        }),
+    );
 
     const [beautify, setBeautify] = useState(false);
 
     useEffect(() => {
-        send(FetchEvents.FETCH, { url: requestUrl });
+        send({
+            type: FetchEvents.FETCH,
+            data: { url: requestUrl },
+        });
     }, [requestUrl, send]);
 
     const onRetry = () => {
-        send(FetchEvents.RETRY, { url: requestUrl });
+        send({
+            type: FetchEvents.RETRY,
+            data: { url: requestUrl },
+        });
     };
 
     const handleBackToRequestClick = () => {
@@ -113,7 +125,7 @@ export const RequestPreview = observer(() => {
                     </span>
                     <button
                         type="button"
-                        className="request-preview__button request-preview__button--white"
+                        className="button button--l button--green-bg request-preview__button"
                         onClick={onRetry}
                         title={tryAgainButtonTitle}
                     >
@@ -150,21 +162,24 @@ export const RequestPreview = observer(() => {
                 <button
                     type="button"
                     onClick={handleBackToRequestClick}
-                    className="request-modal__navigation request-modal__navigation--button"
+                    className="request-modal__navigation"
                 >
-                    <Icon id="#arrow-left" classname="icon--24" />
+                    <Icon
+                        id="#arrow-left"
+                        classname="icon--24 icon--gray-default"
+                    />
                     <span className="request-modal__header">
                         {reactTranslator.getMessage('filtering_modal_preview_title')}
                     </span>
                 </button>
             </div>
-            <div className="request-modal__content request-preview">
+            <div className="request-modal__content request-preview thin-scrollbar">
                 {renderContent()}
             </div>
             <div className="request-modal__controls">
                 <button
                     type="button"
-                    className="request-modal__button request-modal__button--white"
+                    className="button button--l button--transparent request-modal__button"
                     onClick={handleBackToRequestClick}
                     title={backToRequestButtonTitle}
                 >
@@ -173,7 +188,7 @@ export const RequestPreview = observer(() => {
                 {isText && previewState.matches(FetchStates.SUCCESS) && (
                     <button
                         type="button"
-                        className="request-modal__button request-modal__button--white"
+                        className="button button--l button--transparent request-modal__button"
                         onClick={handleBeautifyClick}
                         title={beautifyButtonTitle}
                     >

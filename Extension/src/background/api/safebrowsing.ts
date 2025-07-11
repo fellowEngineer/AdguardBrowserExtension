@@ -18,35 +18,53 @@
 import browser from 'webextension-polyfill';
 import SHA256 from 'crypto-js/sha256';
 
-import { Log } from '../../common/log';
-import { SB_SUSPENDED_CACHE_KEY, SAFEBROWSING_PAGE_PATH } from '../../common/constants';
-
+import { BLOCKING_SAFEBROWSING_OUTPUT } from '../../../../constants';
+import { logger } from '../../common/logger';
+import { SB_SUSPENDED_CACHE_KEY } from '../../common/constants';
+import { Prefs } from '../prefs';
 import {
-    storage,
-    settingsStorage,
     sbCache,
     sbRequestCache,
-} from '../storages';
-import { ExtensionXMLHttpRequest, network } from './network';
+    SbCache,
+} from '../storages/safebrowsing';
+import { browserStorage } from '../storages/shared-instances';
 import { UrlUtils } from '../utils/url';
-import { SettingOption } from '../schema';
 
+import {
+    type ExtensionXMLHttpRequest,
+    network,
+    type ResponseLikeXMLHttpRequest,
+} from './network/main';
+
+/**
+ * The Safe Browsing API checks whether a site is in a database of potentially
+ * dangerous sites or not by creating a hash of the requested URL to eliminate
+ * the possibility of identifying visited sites.
+ */
 export class SafebrowsingApi {
     /**
      * If we've got an error response from the backend, suspend requests for
-     * this time: 40 minutes
+     * this time: 40 minutes.
      */
-    private static SUSPEND_TTL_MS = 40 * 60 * 1000;
+    private static readonly SUSPEND_TTL_MS = 40 * 60 * 1000;
 
     /**
-     * Domain hash length
+     * Domain hash length.
      */
-    private static DOMAIN_HASH_LENGTH = 4;
-
-    private static SB_ALLOW_LIST = 'allowlist';
+    private static readonly DOMAIN_HASH_LENGTH = 4;
 
     /**
-     * Initialize new safebrowsing cache from {@link Storage}
+     * No content response status code.
+     */
+    private static readonly NO_CONTENT_STATUS_CODE = 204;
+
+    /**
+     * Server error response status code.
+     */
+    private static readonly SERVER_ERROR_STATUS_CODE = 500;
+
+    /**
+     * Initialize new safebrowsing cache from {@link Storage}.
      *
      * @see {@link SbCache#init}
      */
@@ -55,17 +73,17 @@ export class SafebrowsingApi {
     }
 
     /**
-     * Clears safebrowsing cache
+     * Clears safebrowsing cache.
      */
     public static async clearCache(): Promise<void> {
         await sbCache.clear();
     }
 
     /**
-     * Temporarily allowlist URL
-     * Adds URL to trusted sites (this URL will be ignored by safebrowsing filter)
+     * Temporarily allowlist URL.
+     * Adds URL to trusted sites (this URL will be ignored by safebrowsing filter).
      *
-     * @param url URL
+     * @param url URL.
      */
     public static async addToSafebrowsingTrusted(url: string): Promise<void> {
         const host = UrlUtils.getHost(url);
@@ -73,42 +91,39 @@ export class SafebrowsingApi {
             return;
         }
 
-        await sbCache.set(SafebrowsingApi.createHash(host), SafebrowsingApi.SB_ALLOW_LIST);
+        await sbCache.set(SafebrowsingApi.createHash(host), SbCache.SB_ALLOW_LIST);
     }
 
     /**
      * Checks URL with safebrowsing filter.
-     * http://adguard.com/en/how-malware-blocked.html#extension
      *
-     * @param requestUrl Request URL
-     * @param referrerUrl Referrer URL
+     * @see {@link https://adguard.com/kb/general/browsing-security/#extensions}
+     *
+     * @param requestUrl Request URL.
+     * @param referrerUrl Referrer URL.
+     *
+     * @returns Safebrowsing list we've detected or null.
      */
     public static async checkSafebrowsingFilter(requestUrl: string, referrerUrl: string): Promise<string | undefined> {
-        const safebrowsingDisabled = settingsStorage.get(SettingOption.DisableSafebrowsing);
-
-        if (safebrowsingDisabled) {
-            return;
-        }
-
-        Log.debug('Checking safebrowsing filter for', requestUrl);
+        logger.trace(`[ext.SafebrowsingApi.checkSafebrowsingFilter]: checking safebrowsing filter for ${requestUrl}...`);
 
         const sbList = await SafebrowsingApi.lookupUrl(requestUrl);
 
         if (!sbList) {
-            Log.debug('No safebrowsing rule found');
+            logger.trace('[ext.SafebrowsingApi.checkSafebrowsingFilter]: no safebrowsing rule found');
             return;
         }
 
-        Log.debug('Following safebrowsing filter has been fired:', sbList);
+        logger.trace('[ext.SafebrowsingApi.checkSafebrowsingFilter]: following safebrowsing filter has been matched:', sbList);
         return SafebrowsingApi.getErrorPageURL(requestUrl, referrerUrl, sbList);
     }
 
     /**
-     * Performs lookup to safebrowsing service
+     * Performs lookup to safebrowsing service.
      *
-     * @param requestUrl - request url
+     * @param requestUrl Request url.
      *
-     * @returns safebrowsing list we've detected or null
+     * @returns Safebrowsing list we've detected or null.
      */
     private static async lookupUrl(requestUrl: string): Promise<string | null> {
         const host = UrlUtils.getHost(requestUrl);
@@ -129,7 +144,7 @@ export class SafebrowsingApi {
 
         // check safebrowsing is active
         const now = Date.now();
-        const suspendedFrom = Number(await storage.get(SB_SUSPENDED_CACHE_KEY));
+        const suspendedFrom = Number(await browserStorage.get(SB_SUSPENDED_CACHE_KEY));
         if (suspendedFrom && (now - suspendedFrom) < SafebrowsingApi.SUSPEND_TTL_MS) {
             return null;
         }
@@ -139,34 +154,34 @@ export class SafebrowsingApi {
         const shortHashes = hashes
             .map((hash) => hash.substring(0, SafebrowsingApi.DOMAIN_HASH_LENGTH))
             // Filter already checked hashes
-            .filter(x => !sbRequestCache.get(x));
+            .filter((x) => !sbRequestCache.get(x));
 
         if (shortHashes.length === 0) {
             // In case we have not found anything in safebrowsingCache and all short hashes have been checked in
             // safebrowsingRequestsCache - means that there is no need to request backend again
-            await sbCache.set(SafebrowsingApi.createHash(host), SafebrowsingApi.SB_ALLOW_LIST);
-            return SafebrowsingApi.createResponse(SafebrowsingApi.SB_ALLOW_LIST);
+            await sbCache.set(SafebrowsingApi.createHash(host), SbCache.SB_ALLOW_LIST);
+            return SafebrowsingApi.createResponse(SbCache.SB_ALLOW_LIST);
         }
 
-        let response: ExtensionXMLHttpRequest;
+        let response: ExtensionXMLHttpRequest | ResponseLikeXMLHttpRequest;
 
         try {
             response = await network.lookupSafebrowsing(shortHashes);
         } catch (e) {
-            Log.error('Error response from safebrowsing lookup server for', host);
+            logger.error(`[ext.SafebrowsingApi.lookupUrl]: error response from safebrowsing lookup server for ${host}. Original error:`, e);
             await SafebrowsingApi.suspendSafebrowsing();
             return null;
         }
 
-        if (response && response.status >= 500) {
+        if (response && response.status >= SafebrowsingApi.SERVER_ERROR_STATUS_CODE) {
             // Error on server side, suspend request
-            Log.error(`Error response status ${response.status} received from safebrowsing lookup server.`);
+            logger.error(`[ext.SafebrowsingApi.lookupUrl]: error response status ${response.status} received from safebrowsing lookup server.`);
             await SafebrowsingApi.suspendSafebrowsing();
             return null;
         }
 
         if (!response) {
-            Log.error('Can`t read response from the server');
+            logger.error('[ext.SafebrowsingApi.lookupUrl]: cannot read response from the server');
             return null;
         }
 
@@ -176,11 +191,11 @@ export class SafebrowsingApi {
             sbRequestCache.set(x, true);
         });
 
-        sbList = SafebrowsingApi.SB_ALLOW_LIST;
+        sbList = SbCache.SB_ALLOW_LIST;
 
-        if (response.status !== 204) {
+        if (response.status !== SafebrowsingApi.NO_CONTENT_STATUS_CODE) {
             sbList = await SafebrowsingApi.processSbResponse(response.responseText, hashesMap)
-            || SafebrowsingApi.SB_ALLOW_LIST;
+                || SbCache.SB_ALLOW_LIST;
         }
 
         await sbCache.set(SafebrowsingApi.createHash(host), sbList);
@@ -188,25 +203,26 @@ export class SafebrowsingApi {
     }
 
     /**
-     * Calculates hash for host string
+     * Calculates hash for host string.
      *
-     * Public for test purposes
+     * Public for test purposes.
      *
-     * @param host - host string
+     * @param host Host string.
      *
-     * @returns host SHA256 hash
+     * @returns Host SHA256 hash.
      */
     public static createHash(host: string): string {
         return SHA256(`${host}/`).toString().toUpperCase();
     }
 
     /**
-     * Access Denied page URL
+     * Access denied page URL.
      *
-     * @param requestUrl    Request URL
-     * @param referrerUrl   Referrer URL
-     * @param sbList        Safebrowsing list
-     * @returns page URL
+     * @param requestUrl    Request URL.
+     * @param referrerUrl   Referrer URL.
+     * @param sbList        Safebrowsing list.
+     *
+     * @returns Page URL.
      */
     private static getErrorPageURL(
         requestUrl: string,
@@ -215,11 +231,11 @@ export class SafebrowsingApi {
     ): string {
         const listName = sbList || 'malware';
         const isMalware = listName.includes('malware');
-        let url = SAFEBROWSING_PAGE_PATH;
+
+        let url = `${BLOCKING_SAFEBROWSING_OUTPUT}.html`;
         url += `?malware=${isMalware}`;
 
         const host = UrlUtils.getHost(requestUrl);
-
         if (host) {
             url += `&host=${encodeURIComponent(host)}`;
         }
@@ -227,15 +243,18 @@ export class SafebrowsingApi {
         url += `&url=${encodeURIComponent(requestUrl)}`;
         url += `&ref=${encodeURIComponent(referrerUrl)}`;
 
+        url += `&_locale=${encodeURIComponent(Prefs.language)}`;
+
         return browser.runtime.getURL(url);
     }
 
     /**
-     * Parses safebrowsing service response
+     * Parses safebrowsing service response.
      *
-     * @param responseText  Response text
-     * @param hashesMap  Hashes hosts map
-     * @returns Safebrowsing list or null
+     * @param responseText Response text.
+     * @param hashesMap Hashes hosts map.
+     *
+     * @returns Safebrowsing list or null.
      */
     private static async processSbResponse(
         responseText: string,
@@ -246,12 +265,12 @@ export class SafebrowsingApi {
         }
 
         try {
-            const data: { hash: string, list: string }[] = [];
+            const data: { hash: string; list: string }[] = [];
 
             responseText.split('\n')
                 // filter empty lines
-                .filter(line => !!line)
-                .forEach(line => {
+                .filter((line) => !!line)
+                .forEach((line) => {
                     const row = line.split(':');
 
                     const hash = row[2];
@@ -273,43 +292,45 @@ export class SafebrowsingApi {
             }
 
             return null;
-        } catch (ex) {
-            Log.error('Error parse safebrowsing response, cause', ex);
+        } catch (e) {
+            logger.error('[ext.SafebrowsingApi.processSbResponse]: error parse safebrowsing response. Original error:', e);
         }
+
         return null;
     }
 
     /**
-     * Creates lookup callback parameter
+     * Creates lookup callback parameter.
      *
-     * @param sbList    Safebrowsing list we've detected or null
+     * @param sbList Safebrowsing list we've detected or null.
+     *
      * @returns Safebrowsing list or null if this list is SB_ALLOW_LIST (means that site was allowlisted).
      */
     private static createResponse(sbList: string): string | null {
-        return (sbList === SafebrowsingApi.SB_ALLOW_LIST) ? null : sbList;
+        return (sbList === SbCache.SB_ALLOW_LIST) ? null : sbList;
     }
 
     /**
-     * Resumes previously suspended work of SafebrowsingFilter
+     * Resumes previously suspended work of SafebrowsingFilter.
      */
     private static async resumeSafebrowsing(): Promise<void> {
-        await storage.remove(SB_SUSPENDED_CACHE_KEY);
+        await browserStorage.remove(SB_SUSPENDED_CACHE_KEY);
     }
 
     /**
-     * Suspend work of SafebrowsingFilter (in case of backend error)
+     * Suspend work of SafebrowsingFilter (in case of backend error).
      */
     private static async suspendSafebrowsing(): Promise<void> {
-        await storage.set(SB_SUSPENDED_CACHE_KEY, Date.now());
+        await browserStorage.set(SB_SUSPENDED_CACHE_KEY, Date.now());
     }
 
     /**
      * Calculates SHA256 hashes for strings in hosts and then
-     * gets prefixes for calculated hashes
+     * Returns prefixes for calculated hashes.
      *
-     * @param hosts -list of hosts
+     * @param hosts List of hosts.
      *
-     * @returns key value record, where key is calculated hash and value is host
+     * @returns Key value record, where key is calculated hash and value is host.
      */
     private static createHashesMap(hosts: string[]): { [key: string]: string } {
         const result = Object.create(null);
@@ -329,11 +350,11 @@ export class SafebrowsingApi {
     }
 
     /**
-     * Checks safebrowsing cache
+     * Checks safebrowsing cache.
      *
-     * @param hosts - list of hosts
+     * @param hosts List of hosts.
      *
-     * @returns matched safebrowsing list name or null
+     * @returns Matched safebrowsing list name or null.
      */
     private static checkHostsInSbCache(hosts: string[]): string | null {
         for (let i = 0; i < hosts.length; i += 1) {
@@ -355,12 +376,12 @@ export class SafebrowsingApi {
      * Extracts hosts from one host.
      * This method returns all sub-domains and IP address of the specified host.
      *
-     * @param host - host string
+     * @param host Host string.
      *
-     * @returns list of sub-domains and ip addresses strings
+     * @returns List of sub-domains and ip addresses strings.
      */
     private static extractHosts(host: string): string[] {
-        const hosts = [];
+        const hosts: string[] = [];
         if (UrlUtils.isIpv4(host) || UrlUtils.isIpv6(host)) {
             hosts.push(host);
             return hosts;

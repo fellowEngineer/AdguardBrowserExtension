@@ -17,9 +17,10 @@
  */
 
 import React, { useEffect, useState } from 'react';
+
 import beautify from 'js-beautify';
 
-import { RequestType } from '../../../../../common/constants';
+import { ContentType as RequestType } from 'tswebextension';
 
 const getBeautifier = (type) => {
     switch (type) {
@@ -52,7 +53,7 @@ export const TextRequest = ({
 
     if (textState) {
         return (
-            <div className="request-modal__text">
+            <div className="request-modal__text thin-scrollbar">
                 <pre>
                     <code>
                         {textState}

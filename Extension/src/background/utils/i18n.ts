@@ -17,32 +17,42 @@
  */
 
 /**
- * Helper class for working with i18n locales
+ * Helper class for working with i18n locales.
  */
 export class I18n {
     /**
-     * Gets matched locale from locales list or dictionary
+     * Returns matched `locale` from `locales` list.
      *
-     * @param locales - list or dictionary of i18n locales
-     * @param locale - target locale
-     * @returns matched locale or null, if locale is not found
+     * @param locales Array of locale codes represented as strings.
+     * @param locale Target locale.
+     *
+     * @returns Normalized locale code if found, otherwise null.
      */
-    public static find(
-        locales: string[] | Record<string, unknown>,
-        locale: string,
-    ): string | null {
-        const lang = locale.replace('-', '_');
+    public static find(locales: string[], locale: string): string | null {
+        const normalizedLocales = locales.map((l) => I18n.normalizeLanguageCode(l));
+        const lang = this.normalizeLanguageCode(locale);
 
-        if (lang in locales) {
+        if (normalizedLocales.includes(lang)) {
             return lang;
         }
 
         const [localePart] = lang.split('_');
 
-        if (localePart && localePart in locales) {
+        if (localePart && normalizedLocales.includes(localePart)) {
             return localePart;
         }
 
         return null;
+    }
+
+    /**
+     * Normalizes language code.
+     *
+     * @param locale Language code.
+     *
+     * @returns Normalized language code.
+     */
+    public static normalizeLanguageCode(locale: string): string {
+        return locale.toLowerCase().replace('-', '_');
     }
 }

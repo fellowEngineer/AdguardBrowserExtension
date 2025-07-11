@@ -17,22 +17,58 @@
  */
 import zod from 'zod';
 
-export const pageStatsDataItemValidator = zod.record(zod.string(), zod.number());
+/**
+ * Describes the relationship between the number of blocked requests and
+ * the name of the group (similar to the tag).
+ */
+const pageStatsDataItemValidator = zod.record(zod.string(), zod.number());
 
+/**
+ * Describes the relationship between the number of blocked requests and
+ * the name of the group (similar to the tag).
+ */
 export type PageStatsDataItem = zod.infer<typeof pageStatsDataItemValidator>;
 
-export const pageStatsDataValidator = zod.object({
+const pageStatsDataValidator = zod.object({
+    /**
+     * Blocked requests grouped by hours.
+     */
     hours: pageStatsDataItemValidator.array(),
+
+    /**
+     * Blocked requests grouped by days.
+     */
     days: pageStatsDataItemValidator.array(),
+
+    /**
+     * Blocked requests grouped by months.
+     */
     months: pageStatsDataItemValidator.array(),
+
+    /**
+     * The time stamp of the last update. In milliseconds.
+     */
     updated: zod.number(),
 });
 
+/**
+ * Describes an object with blocked requests grouped by time and timestamp of
+ * the last update.
+ */
 export type PageStatsData = zod.infer<typeof pageStatsDataValidator>;
 
 export const pageStatsValidator = zod.object({
+    /**
+     * Total blocked requests.
+     */
     totalBlocked: zod.number().optional(),
+    /**
+     * Blocked requests grouped by time.
+     */
     data: pageStatsDataValidator.optional(),
 });
 
+/**
+ * Contains total blocked requests and blocked requests grouped by time.
+ */
 export type PageStats = zod.infer<typeof pageStatsValidator>;

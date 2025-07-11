@@ -5,13 +5,86 @@ plan:
   key: BEBETASPECS
   name: browser extension - build beta
 variables:
-  dockerNode: adguard/node-ssh:14.18--2
+  dockerNode: adguard/extension-builder:22.14--0.2--0
 stages:
+  - Size Check:
+      manual: false
+      final: false
+      jobs:
+        - Check Bundle Size
   - Build:
-      manual: 'false'
-      final: 'false'
+      manual: false
+      final: false
       jobs:
         - Build
+
+Check Bundle Size:
+  key: SIZECHECK
+  other:
+    clean-working-dir: true
+  docker:
+    image: ${bamboo.dockerNode}
+    volumes:
+      ${system.PNPM_DIR}: "${bamboo.cachePnpm}"
+  tasks:
+    - checkout:
+        force-clean-build: 'true'
+    - script:
+        interpreter: SHELL
+        scripts:
+          - |-
+            set -x
+            set -e
+
+            # Fix mixed logs
+            exec 2>&1
+
+            ls -la
+
+            # Set cache directory
+            pnpm config set store-dir ${bamboo.cachePnpm}
+
+            # Install dependencies
+            pnpm install ${bamboo.varsPnpm}
+
+            BUILD_TYPE="beta"
+
+            echo "Executing build for $BUILD_TYPE"
+
+            # Run build
+            pnpm $BUILD_TYPE
+
+            # Create artifacts directory if it doesn't exist
+            mkdir -p artifacts
+
+            # NOTE: Firefox and Opera builds are not needed for artifacts
+            # but they are needed for bundle size check
+            pnpm beta firefox-amo && pnpm beta firefox-standalone && pnpm beta opera
+
+            echo "Checking bundle sizes"
+            pnpm check-bundle-size beta
+
+            # Cleaning up Firefox and Opera builds after bundle size check
+            rm -rf build/beta/firefox-* build/beta/opera
+  final-tasks:
+    - script:
+        interpreter: SHELL
+        scripts:
+          - |-
+            set -x
+            set -e
+
+            # Fix mixed logs
+            exec 2>&1
+
+            ls -la
+
+            echo "Size before cleanup:" && du -h | tail -n 1
+            rm -rf node_modules build
+            echo "Size after cleanup:" && du -h | tail -n 1
+  requirements:
+    - adg-docker: 'true'
+
 
 Build:
   key: BUILD
@@ -20,9 +93,7 @@ Build:
   docker:
     image: ${bamboo.dockerNode}
     volumes:
-      ${system.YARN_DIR}: "${bamboo.cacheYarn}"
-    # we use dns to avoid etimedout error when AMO is validating extension
-    docker-run-arguments: ['--dns', '94.140.14.140']
+      ${system.PNPM_DIR}: "${bamboo.cachePnpm}"
   tasks:
     - checkout:
         force-clean-build: 'true'
@@ -42,15 +113,28 @@ Build:
 
             ls -la
 
-            yarn install ${bamboo.varsYarn}
-            CREDENTIALS_PASSWORD="${bamboo.extensionsPassphrase}" yarn beta
+            # Set cache directory
+            pnpm config set store-dir ${bamboo.cachePnpm}
 
-            # zip source files for publishing on AMO
-            git ls-files | zip -@ build/beta/source.zip
+            pnpm install ${bamboo.varsPnpm}
 
-            rm -rf node_modules
+            pnpm beta
+
+            # Build CRX by a separate script run
+            pnpm beta chrome-crx
+
+            # Create artifacts directory if it doesn't exist
+            mkdir -p artifacts
+
+            # Copy all artifacts to the artifacts directory
+            cp build/beta/build.txt artifacts/
+            cp build/beta/chrome.zip artifacts/
+            cp build/beta/chrome-mv3.zip artifacts/
+            cp build/beta/edge.zip artifacts/
+            cp build/beta/chrome.crx artifacts/
+            cp build/beta/update.xml artifacts/
     - inject-variables:
-        file: build/beta/build.txt
+        file: artifacts/build.txt
         scope: RESULT
         namespace: inject
     - any-task:
@@ -58,55 +142,51 @@ Build:
         configuration:
           selectedRepository: defaultRepository
           tagName: v${bamboo.inject.version}-beta
+  final-tasks:
+    - script:
+        interpreter: SHELL
+        scripts:
+          - |-
+            set -x
+            set -e
+
+            # Fix mixed logs
+            exec 2>&1
+
+            ls -la
+
+            echo "Size before cleanup:" && du -h | tail -n 1
+            rm -rf node_modules build
+            echo "Size after cleanup:" && du -h | tail -n 1
   artifacts:
-    - name: adguard-api.zip
-      location: build/beta
-      pattern: adguard-api.zip
-      shared: true
-      required: false
     - name: build.txt
-      location: build/beta
+      location: artifacts
       pattern: build.txt
       shared: true
       required: true
     - name: chrome.zip
-      location: build/beta
+      location: artifacts
       pattern: chrome.zip
       shared: true
       required: true
+    - name: chrome-mv3.zip
+      location: artifacts
+      pattern: chrome-mv3.zip
+      shared: true
+      required: true
     - name: edge.zip
-      location: build/beta
+      location: artifacts
       pattern: edge.zip
       shared: true
       required: true
-    - name: firefox.zip
-      location: build/beta
-      pattern: firefox.zip
-      shared: true
-      required: true
     - name: chrome.crx
-      location: build/beta
+      location: artifacts
       pattern: chrome.crx
       shared: true
       required: true
     - name: update.xml
-      location: build/beta
+      location: artifacts
       pattern: update.xml
-      shared: true
-      required: true
-    - name: firefox.xpi
-      location: build/beta
-      pattern: firefox.xpi
-      shared: true
-      required: true
-    - name: update.json
-      location: build/beta
-      pattern: update.json
-      shared: true
-      required: true
-    - name: source.zip
-      location: build/beta
-      pattern: source.zip
       shared: true
       required: true
   requirements:

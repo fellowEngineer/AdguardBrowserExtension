@@ -15,43 +15,103 @@
  * You should have received a copy of the GNU General Public License
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
-import { BACKGROUND_TAB_ID, TabContext } from '@adguard/tswebextension';
-import { debounce } from 'lodash';
+import { throttle } from 'lodash-es';
+
+import { tabsApi as tsWebExtTabsApi, type TabContext } from '../../tswebextension';
 import { MessageType, sendMessage } from '../../../common/messages';
+import { TabsApi } from '../../../common/api/extension';
+import { logger } from '../../../common/logger';
 
 import { ContextMenuApi } from './context-menu';
-import { FrameData, FramesApi } from './frames';
-import { IconsApi } from './icons';
+import { type FrameData, FramesApi } from './frames';
+import { iconsApi } from './icons';
 
+/**
+ * The UI API provides a singleton to update the tab icon and the counters of
+ * blocked requests on the tab.
+ */
 export class UiApi {
-    public static async update(tabContext: TabContext): Promise<void> {
-        const tabId = tabContext?.info?.id;
+    /**
+     * Throttle to update tab's information.
+     */
+    private static readonly THROTTLE_DELAY_MS = 100;
 
-        if (!tabId || tabId === BACKGROUND_TAB_ID) {
-            return;
-        }
-
-        const frameData = FramesApi.getMainFrameData(tabContext);
-
-        await ContextMenuApi.updateMenu(frameData);
-
-        debounce(() => {
-            IconsApi.updateTabIcon(tabId, frameData);
-            UiApi.broadcastTotalBlockedMessage(frameData);
-        }, 100)();
+    /**
+     * Initializes UI service.
+     */
+    static async init(): Promise<void> {
+        await iconsApi.init();
     }
 
-    private static async broadcastTotalBlockedMessage({ totalBlocked, totalBlockedTab }: FrameData): Promise<void> {
+    /**
+     * Updates the tab action icon and the blocked requests counter
+     * on the provided tab with throttle {@link UiApi.THROTTLE_DELAY_MS}.
+     *
+     * @param tabId Tab's id.
+     * @param frameData The {@link FrameData} object.
+     */
+    private static throttledUpdateAction = throttle((tabId: number, frameData: FrameData): void => {
+        iconsApi.updateTabAction(tabId, frameData);
+        UiApi.broadcastTotalBlockedMessage(tabId, frameData);
+    }, UiApi.THROTTLE_DELAY_MS);
+
+    /**
+     * Updates the UI on the provided tab.
+     *
+     * @param tabContext Updated {@link TabContext}.
+     */
+    public static async update(tabContext: TabContext): Promise<void> {
+        const frameData = FramesApi.getMainFrameData(tabContext);
+
+        await ContextMenuApi.throttledUpdateMenu(frameData);
+
+        const tabId = tabContext.info.id;
+        UiApi.throttledUpdateAction(tabId, frameData);
+    }
+
+    /**
+     * Handles promo notification being viewed.
+     */
+    public static async dismissPromo(): Promise<void> {
+        let frameData: FrameData | undefined;
+
+        const tab = await TabsApi.getActive();
+        const tabId = tab?.id;
+        if (tabId) {
+            const tabContext = tsWebExtTabsApi.getTabContext(tabId);
+            if (tabContext) {
+                frameData = FramesApi.getMainFrameData(tabContext);
+            }
+        }
+
+        await iconsApi.dismissPromoIcon(tabId, frameData);
+    }
+
+    /**
+     * Sends message with updated counters of blocked requests.
+     *
+     * @param tabId Tab's id.
+     * @param frameData Broadcasted {@link FrameData}.
+     * @param frameData.totalBlocked Total count of blocked requests.
+     * @param frameData.totalBlockedTab Number of blocked requests.
+     */
+    private static async broadcastTotalBlockedMessage(tabId: number, frameData: FrameData): Promise<void> {
+        const {
+            totalBlocked,
+            totalBlockedTab,
+        } = frameData;
+
         try {
-            sendMessage<MessageType.UpdateTotalBlocked>({
+            await sendMessage({
                 type: MessageType.UpdateTotalBlocked,
                 data: {
+                    tabId,
                     totalBlocked,
                     totalBlockedTab,
                 },
             });
         } catch (e) {
-            // do nothing
+            logger.info('[ext.UiApi.broadcastTotalBlockedMessage]: failed to broadcast total blocked message:', e);
         }
     }
 }

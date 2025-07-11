@@ -15,47 +15,144 @@
  * You should have received a copy of the GNU General Public License
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
+
 import { FilterUpdateApi } from '../api';
+import { browserStorage, metadataStorage } from '../storages';
+import { isNumber } from '../../common/guards';
+import { logger } from '../../common/logger';
 
 /**
- * Service for scheduling filter update checks
+ * Service for scheduling filters update checks.
  *
- * It delays update check on initialization on 5 min
- * 5 min after initialization scheduler checks filter updates every 30 minutes
+ * After initialization scheduler checks filter updates
+ * {@link CHECK_PERIOD_MS every 5 minutes}.
  */
 export class FilterUpdateService {
-    // update checking initialization delay
-    private static initDelay = 1000 * 60 * 5; // 5 min
+    /**
+     * Storage key for storing last update *check* time in the storage.
+     */
+    private static UPDATE_CHECK_TIME_KEY = 'updateCheckTimeMs';
 
-    // checking period
-    private static checkPeriodMs = 1000 * 60 * 30; // 30 min
+    /**
+     * Storage key for storing last filters update time in the storage.
+     *
+     * Needed to send `filters_last_update` during issue reporting.
+     */
+    private static LAST_UPDATE_KEY = 'filters-last-update';
 
-    private timerId: number | undefined;
+    /**
+     * Checking period
+     * That timer should check every specified period of time if it is time to update filters.
+     */
+    private static readonly CHECK_PERIOD_MS = 1000 * 60 * 5; // 5 min
 
+    /**
+     * Filter update period.
+     * This means that filters should be updated if it was updated more than the specified value.
+     * We set 1 hour because currently we generate patches for our filter once an hour and
+     * for third-party filters once every 4 hours.
+     */
+    private static readonly FILTER_UPDATE_PERIOD_MS = 1000 * 60 * 60; // 1 hour
+
+    /**
+     * Stores scheduler timer id for checking update in every
+     * {@link CHECK_PERIOD_MS} time.
+     */
+    private schedulerTimerId: number | undefined;
+
+    /**
+     * Creates new {@link FilterUpdateService}.
+     */
     constructor() {
         this.update = this.update.bind(this);
     }
 
     /**
-     * Run update scheduler after {@link initDelay} timeout
+     * Initially starts checking filters update.
      */
     public async init(): Promise<void> {
-        setTimeout(async () => {
-            await this.update();
-        }, FilterUpdateService.initDelay);
+        await this.update();
+
+        if (__IS_MV3__) {
+            const dnrRulesetsBuildTimestampMs = metadataStorage.getDnrRulesetsBuildTimestampMs();
+            if (dnrRulesetsBuildTimestampMs === undefined) {
+                logger.warn('[ext.FilterUpdateService.init]: DNR rulesets build timestamp is not available.');
+                return;
+            }
+            // We set last update time in MV3 during issue reporting.
+            await FilterUpdateService.setLastUpdateTimeMs(dnrRulesetsBuildTimestampMs);
+        } else {
+            await FilterUpdateService.setLastUpdateTimeMs(Date.now());
+        }
     }
 
     /**
-     * Checks filter updates every {@link checkPeriodMs} period
+     * Sets the last filters **update** (not just *check*) time in the storage
+     * for version which supports diff updates, i.e. MV2.
+     * For MV3 this method is used only to record the last update time during
+     * issue reporting.
+     *
+     * @param timestampMs The timestamp in milliseconds.
+     */
+    public static async setLastUpdateTimeMs(timestampMs: number): Promise<void> {
+        await browserStorage.set(FilterUpdateService.LAST_UPDATE_KEY, timestampMs);
+    }
+
+    /**
+     * Gets the last filters **update** (not just *check*) time from the storage
+     * for version which supports diff updates, i.e. MV2.
+     *
+     * @returns The timestamp in milliseconds or `null` if the value is not set.
+     */
+    public static async getLastUpdateTimeMs(): Promise<number | null> {
+        const lastUpdateTimeMs = await browserStorage.get(FilterUpdateService.LAST_UPDATE_KEY);
+
+        if (lastUpdateTimeMs === undefined) {
+            return null;
+        }
+
+        return Number(lastUpdateTimeMs);
+    }
+
+    /**
+     * Checks every {@link CHECK_PERIOD_MS} period whether the enabled filters
+     * should be updated with setTimeout which saved to {@link schedulerTimerId}.
      */
     private async update(): Promise<void> {
-        window.clearTimeout(this.timerId);
+        // eslint-disable-next-line no-restricted-globals
+        self.clearTimeout(this.schedulerTimerId);
 
-        await FilterUpdateApi.autoUpdateFilters();
+        const prevCheckTimeMs = await browserStorage.get(FilterUpdateService.UPDATE_CHECK_TIME_KEY);
 
-        this.timerId = window.setTimeout(async () => {
+        /**
+         * Check updates if prevCheckTimeMs is not set or
+         * if it is set and last check was more than {@link CHECK_PERIOD_MS} ago.
+         */
+        const shouldCheckUpdates = !prevCheckTimeMs
+            || (isNumber(prevCheckTimeMs)
+                && Date.now() - prevCheckTimeMs > FilterUpdateService.FILTER_UPDATE_PERIOD_MS);
+
+        if (shouldCheckUpdates) {
+            try {
+                if (__IS_MV3__) {
+                    // TODO: revert if Quick Fixes filter is back
+                    // await QuickFixesRulesApi.updateQuickFixesFilter();
+                } else {
+                    await FilterUpdateApi.autoUpdateFilters();
+                }
+            } catch (e) {
+                logger.error('[ext.FilterUpdateService.update]: an error occurred during filters update:', e);
+            }
+            // Saving current time to storage is required in the cases
+            // when background page is often unloaded,
+            // for example, in the cases of service workers.
+            await browserStorage.set(FilterUpdateService.UPDATE_CHECK_TIME_KEY, Date.now());
+        }
+
+        // eslint-disable-next-line no-restricted-globals
+        this.schedulerTimerId = self.setTimeout(async () => {
             await this.update();
-        }, FilterUpdateService.checkPeriodMs);
+        }, FilterUpdateService.CHECK_PERIOD_MS);
     }
 }
 

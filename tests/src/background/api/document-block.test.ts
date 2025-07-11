@@ -1,6 +1,14 @@
 import browser from 'sinon-chrome';
-import { Storage } from 'webextension-polyfill';
-import { DocumentBlockApi } from '../../../../Extension/src/background/api';
+import { type Storage } from 'webextension-polyfill';
+import {
+    describe,
+    it,
+    vi,
+    expect,
+    beforeEach,
+} from 'vitest';
+
+import { DocumentBlockApi } from '../../../../Extension/src/background/api/document-block';
 import { TRUSTED_DOCUMENTS_CACHE_KEY } from '../../../../Extension/src/common/constants';
 import { mockLocalStorage } from '../../../helpers';
 
@@ -59,7 +67,7 @@ describe('document block api', () => {
 
         await DocumentBlockApi.init();
 
-        jest.spyOn(Date, 'now').mockImplementation(() => 0);
+        vi.spyOn(Date, 'now').mockImplementation(() => 0);
 
         await DocumentBlockApi.setTrustedDomain(url);
 
@@ -69,6 +77,33 @@ describe('document block api', () => {
                     domain: 'example.com',
                     expires: DocumentBlockApi.TRUSTED_TTL_MS,
                 }]),
+            }),
+        ).toBe(true);
+    });
+
+    it('Resets trusted domains', async () => {
+        const url = 'https://example.org/test';
+
+        await DocumentBlockApi.init();
+
+        vi.spyOn(Date, 'now').mockImplementation(() => 0);
+
+        await DocumentBlockApi.setTrustedDomain(url);
+
+        expect(
+            browser.storage.local.set.calledWith({
+                [TRUSTED_DOCUMENTS_CACHE_KEY]: JSON.stringify([{
+                    domain: 'example.org',
+                    expires: DocumentBlockApi.TRUSTED_TTL_MS,
+                }]),
+            }),
+        ).toBe(true);
+
+        await DocumentBlockApi.reset();
+
+        expect(
+            browser.storage.local.set.calledWith({
+                [TRUSTED_DOCUMENTS_CACHE_KEY]: JSON.stringify([]),
             }),
         ).toBe(true);
     });

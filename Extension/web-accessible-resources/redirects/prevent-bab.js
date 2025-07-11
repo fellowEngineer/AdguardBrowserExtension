@@ -1,4 +1,11 @@
 (function(source, args) {
+    const flag = "done";
+    const uniqueIdentifier = source.uniqueId + source.name + "_" + (Array.isArray(args) ? args.join("_") : "");
+    if (source.uniqueId) {
+        if (Window.prototype.toString[uniqueIdentifier] === flag) {
+            return;
+        }
+    }
     function preventBab$1(source) {
         var nativeSetTimeout = window.setTimeout;
         var babRegex = /\.bab_elementid.$/;
@@ -7,7 +14,7 @@
                 for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
                     args[_key - 1] = arguments[_key];
                 }
-                return nativeSetTimeout.apply(window, [ callback ].concat(args));
+                return nativeSetTimeout.apply(window, [ callback, ...args ]);
             }
             hit(source);
         };
@@ -22,7 +29,7 @@
                 var match = 0;
                 for (var j = 0; j < tokens.length; j += 1) {
                     var token = tokens[j];
-                    var found = token instanceof RegExp ? token.test(str) : str.indexOf(token) > -1;
+                    var found = token instanceof RegExp ? token.test(str) : str.includes(token);
                     if (found) {
                         match += 1;
                     }
@@ -49,40 +56,30 @@
             }
         };
         window.eval = evalWrapper.bind(window);
+        window.eval.toString = nativeEval.toString.bind(nativeEval);
     }
-    function hit(source) {
-        if (source.verbose !== true) {
-            return;
-        }
-        try {
-            var log = console.log.bind(console);
-            var trace = console.trace.bind(console);
-            var prefix = source.ruleText || "";
-            if (source.domainName) {
-                var AG_SCRIPTLET_MARKER = "#%#//";
-                var UBO_SCRIPTLET_MARKER = "##+js";
-                var ruleStartIndex;
-                if (source.ruleText.indexOf(AG_SCRIPTLET_MARKER) > -1) {
-                    ruleStartIndex = source.ruleText.indexOf(AG_SCRIPTLET_MARKER);
-                } else if (source.ruleText.indexOf(UBO_SCRIPTLET_MARKER) > -1) {
-                    ruleStartIndex = source.ruleText.indexOf(UBO_SCRIPTLET_MARKER);
-                }
-                var rulePart = source.ruleText.slice(ruleStartIndex);
-                prefix = "".concat(source.domainName).concat(rulePart);
-            }
-            log("".concat(prefix, " trace start"));
-            if (trace) {
-                trace();
-            }
-            log("".concat(prefix, " trace end"));
-        } catch (e) {}
-        if (typeof window.__debug === "function") {
-            window.__debug(source);
+    function hit(e) {
+        if (e.verbose) {
+            try {
+                var n = console.trace.bind(console), i = "[AdGuard] ";
+                "corelibs" === e.engine ? i += e.ruleText : (e.domainName && (i += `${e.domainName}`), 
+                e.args ? i += `#%#//scriptlet('${e.name}', '${e.args.join("', '")}')` : i += `#%#//scriptlet('${e.name}')`), 
+                n && n(i);
+            } catch (e) {}
+            "function" == typeof window.__debug && window.__debug(e);
         }
     }
     const updatedArgs = args ? [].concat(source).concat(args) : [ source ];
     try {
         preventBab$1.apply(this, updatedArgs);
+        if (source.uniqueId) {
+            Object.defineProperty(Window.prototype.toString, uniqueIdentifier, {
+                value: flag,
+                enumerable: false,
+                writable: false,
+                configurable: false
+            });
+        }
     } catch (e) {
         console.log(e);
     }

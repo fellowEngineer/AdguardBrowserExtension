@@ -17,14 +17,14 @@
 
         &:checked + .checkbox__label {
             &:after {
-                background-color: var(--green74);
+                background-color: var(--stroke-icons-product-icon-default);
             }
 
             &:before {
                 transform: translate(22px, 2px);
 
                 @media (min-width: 640px) {
-                    transform: translate(86px, 18px);
+                    transform: translate(38px, 18px);
                 }
             }
         }
@@ -43,30 +43,18 @@
         transition: 0.3s ease background-color;
 
         @media (min-width: 640px) {
-            width: 120px;
+            width: 72px;
             height: 100%;
             padding: 0 16px;
         }
 
         &:hover {
-            background-color: var(--gray100);
-
-            @media (prefers-color-scheme: dark) {
-                background-color: var(--gray900);
-            }
+            background-color: var(--fills-backgrounds-page-background-hovered);
         }
 
         &--actions {
-            @media (min-width: 640px) {
-                transform: translate(-40px, 6px);
-            }
-
             &:hover {
                 background-color: transparent !important;
-
-                @media (prefers-color-scheme: dark) {
-                    background-color: transparent !important;
-                }
             }
         }
 
@@ -80,12 +68,12 @@
             width: 16px;
             height: 16px;
             border-radius: 50%;
-            background-color: var(--white);
+            background-color: var(--gray-0);
             transition: var(--t3) transform;
 
             @media (min-width: 640px) {
                 top: -16px;
-                transform: translate(66px, 18px);
+                transform: translate(18px, 18px);
             }
         }
 
@@ -96,33 +84,8 @@
             width: 40px;
             height: 20px;
             border-radius: 10px;
-            background-color: var(--gray700);
+            background-color: var(--fills-switch-dns-adg-switch-off-default);
             cursor: pointer;
-
-            @media (prefers-color-scheme: dark) {
-                background-color: var(--gray700);
-            }
-        }
-    }
-}
-
-.light-mode {
-    .checkbox {
-        &__label {
-            &:hover {
-                background-color: var(--gray100);
-            }
-        }
-    }
-}
-
-
-.dark-mode {
-    .checkbox {
-        &__label {
-            &:hover {
-                background-color: var(--gray900);
-            }
         }
     }
 }

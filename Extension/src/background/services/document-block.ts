@@ -17,28 +17,53 @@
  */
 import browser from 'webextension-polyfill';
 
-import { AddUrlToTrustedMessage, MessageType } from '../../common/messages';
+import { type AddUrlToTrustedMessage, MessageType } from '../../common/messages';
 import { DocumentBlockApi, TabsApi } from '../api';
-import { Engine } from '../engine';
+import { engine } from '../engine';
 import { messageHandler } from '../message-handler';
 
+/**
+ * The DocumentBlockService controls events when an already blocked site
+ * is excluded from the blocking mechanism for a period of time.
+ */
 export class DocumentBlockService {
+    /**
+     * Initializes {@link DocumentBlockApi} and registers a listener for
+     * the event of adding a domain to trusted domains.
+     */
     public static async init(): Promise<void> {
         await DocumentBlockApi.init();
 
         messageHandler.addListener(MessageType.AddUrlToTrusted, DocumentBlockService.onAddUrlToTrusted);
     }
 
+    /**
+     * Updates the active tab with the provided URL.
+     *
+     * @param url The URL to update the active tab with.
+     */
+    private static updateActiveTab = async (url: string): Promise<void> => {
+        const tab = await TabsApi.getActive();
+
+        if (!tab?.id) {
+            return;
+        }
+
+        await browser.tabs.update(tab.id, { url });
+    };
+
+    /**
+     * Listener for the event of adding a domain to trusted domains.
+     *
+     * @param message Message of type {@link AddUrlToTrustedMessage}.
+     * @param message.data Contains string url domain.
+     */
     private static async onAddUrlToTrusted({ data }: AddUrlToTrustedMessage): Promise<void> {
         const { url } = data;
 
         await DocumentBlockApi.setTrustedDomain(url);
-        await Engine.update();
+        await engine.update();
 
-        const tab = await TabsApi.getActive();
-
-        if (tab?.id) {
-            await browser.tabs.update(tab.id, { url });
-        }
+        DocumentBlockService.updateActiveTab(url);
     }
 }

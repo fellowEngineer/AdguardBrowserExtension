@@ -17,12 +17,13 @@
  */
 import { SettingOption } from '../schema';
 import { StringStorage } from '../utils/string-storage';
+
 import { settingsStorage } from './settings';
 
 /**
- * {@link StringStorage} instance, that stores
+ * Instance of {@link StringStorage}, that stores
  * stringified inverted allowlist in {@link settingsStorage} under
- * {@link SettingOption.InvertedAllowlistDomains} key
+ * {@link SettingOption.InvertedAllowlistDomains} key.
  */
 export const invertedAllowlistDomainsStorage = new StringStorage<
     SettingOption.InvertedAllowlistDomains,

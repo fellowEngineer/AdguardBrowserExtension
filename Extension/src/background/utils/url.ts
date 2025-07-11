@@ -18,7 +18,7 @@
 import punycode from 'punycode';
 
 /**
- * Helper class to work with URLs
+ * Helper class to work with URLs.
  */
 export class UrlUtils {
     // eslint-disable-next-line max-len
@@ -34,6 +34,13 @@ export class UrlUtils {
 
     static RE_BAD_ADDRESS = /([0-9a-f]{5,}|:{3,}|[^:]:$|^:[^:]$)/i;
 
+    /**
+     * Converts provided Unicode string to {@link https://tools.ietf.org/html/rfc3492 Punycode}.
+     *
+     * @param domain Domain name.
+     *
+     * @returns Domain name in {@link https://tools.ietf.org/html/rfc3492 Punycode}.
+     */
     static toPunyCode(domain: string): string {
         // eslint-disable-next-line no-control-regex
         if (/^[\x00-\x7F]+$/.test(domain)) {
@@ -42,14 +49,22 @@ export class UrlUtils {
         return punycode.toASCII(domain);
     }
 
+    /**
+     * Tries to extract host name from provided url and returns it, if found.
+     *
+     * @param url Url address.
+     *
+     * @returns Host name in case of successful extraction and null otherwise.
+     */
     static getHost(url: string): string | null {
         let firstIdx = url.indexOf('//');
         if (firstIdx === -1) {
-        /**
-         * It's non hierarchical structured URL (e.g. stun: or turn:)
-         * https://tools.ietf.org/html/rfc4395#section-2.2
-         * https://tools.ietf.org/html/draft-nandakumar-rtcweb-stun-uri-08#appendix-B
-         */
+            /**
+             * It is non-hierarchical structured URL, e.g. `stun:` or `turn:`.
+             *
+             * @see {@link https://tools.ietf.org/html/rfc4395#section-2.2}
+             * @see {@link https://tools.ietf.org/html/draft-nandakumar-rtcweb-stun-uri-08#appendix-B}
+             */
             firstIdx = url.indexOf(':');
             if (firstIdx === -1) {
                 return null;
@@ -78,6 +93,13 @@ export class UrlUtils {
         return host;
     }
 
+    /**
+     * Tries to extract domain name from provided url and return it, if found.
+     *
+     * @param url Url address.
+     *
+     * @returns Domain name in case of successful extraction and null otherwise.
+     */
     static getDomainName(url: string): string | null {
         const host = UrlUtils.getHost(url);
 
@@ -88,10 +110,24 @@ export class UrlUtils {
         return UrlUtils.getCroppedDomainName(host);
     }
 
+    /**
+     * Cuts the domain zone 'www.' and returns a string without it.
+     *
+     * @param host Any string.
+     *
+     * @returns String without 'www.' domain zone.
+     */
     static getCroppedDomainName(host: string): string {
         return host.indexOf('www.') === 0 ? host.substring(4) : host;
     }
 
+    /**
+     * Checks that provided string is a IPv4.
+     *
+     * @param address IP address.
+     *
+     * @returns True if provided string is a IPv4.
+     */
     static isIpv4(address: string): boolean {
         if (UrlUtils.RE_V4.test(address)) {
             return true;
@@ -105,6 +141,13 @@ export class UrlUtils {
         return false;
     }
 
+    /**
+     * Checks that provided string is a IPv6.
+     *
+     * @param address IP address.
+     *
+     * @returns True if provided string is a IPv6.
+     */
     static isIpv6(address: string): boolean {
         let a4addon = 0;
         const address4 = address.match(UrlUtils.RE_V4_IN_V6)?.[0];
@@ -147,5 +190,50 @@ export class UrlUtils {
         }
 
         return false;
+    }
+
+    /**
+     * Cleanups file path of a custom filter.
+     *
+     * @param path Path to filter.
+     *
+     * @returns Cleaned path.
+     */
+    static trimFilterFilepath(path: string): string {
+        if (path.indexOf('http') === 0) {
+            return path;
+        }
+
+        const lastSlashIndex = path.lastIndexOf('/');
+        const lastBackslashIndex = path.lastIndexOf('\\');
+
+        if (lastSlashIndex === -1 && lastBackslashIndex === -1) {
+            return path;
+        }
+
+        const lastSeparatorIndex = Math.max(lastSlashIndex, lastBackslashIndex);
+
+        return path.substring(lastSeparatorIndex);
+    }
+
+    /**
+     * Extracts upper level domain from domain.
+     *
+     * @param domain Domain.
+     *
+     * @returns Upper level domain.
+     *
+     * @example
+     * ```
+     * getUpperLevelDomain('www.example.com') => 'example.com'
+     * getUpperLevelDomain('test.pages.dev') => 'pages.dev'
+     * getUpperLevelDomain('allowlist.test.pages.dev') => 'test.pages.dev'
+     * ```
+     */
+    static getUpperLevelDomain(domain: string): string {
+        const parts = domain.split('.');
+        parts.shift();
+
+        return parts.join('.');
     }
 }

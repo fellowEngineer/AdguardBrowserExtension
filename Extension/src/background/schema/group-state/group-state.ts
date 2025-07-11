@@ -16,16 +16,28 @@
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 import zod from 'zod';
+
 import { SchemaPreprocessor } from '../preprocessor';
 
 /**
- * Runtime validator for persistent group state data
+ * Runtime validator for persistent group state data.
  */
-export const groupStateDataValidator = zod.object({
+const groupStateDataValidator = zod.object({
+    /**
+     * Is group enabled or not.
+     */
     enabled: zod.boolean(),
-    toggled: zod.boolean(),
+    /**
+     * Whether the group has ever been switched. Can be affected
+     * programmatically, e.g. After importing settings.
+     */
+    touched: zod.boolean(),
 });
 
+/**
+ * Contains boolean flags about the state of the filter group:
+ * enabled and touched.
+ */
 export type GroupStateData = zod.infer<typeof groupStateDataValidator>;
 
 /**
@@ -39,4 +51,7 @@ export const groupStateStorageDataValidator = zod.record(
     groupStateDataValidator,
 );
 
+/**
+ * Describes an object with numeric keys and group states as values.
+ */
 export type GroupStateStorageData = zod.infer<typeof groupStateStorageDataValidator>;

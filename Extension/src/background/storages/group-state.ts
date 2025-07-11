@@ -17,16 +17,17 @@
  */
 import {
     SettingOption,
-    Metadata,
-    GroupStateData,
-    GroupStateStorageData,
+    type Metadata,
+    type GroupStateData,
+    type GroupStateStorageData,
 } from '../schema';
 import { StringStorage } from '../utils/string-storage';
+
 import { settingsStorage } from './settings';
 
 /**
  * Class for synchronous control {@link GroupStateStorageData},
- * that is persisted as string in another key value storage
+ * that is persisted as string in another key value storage.
  *
  * @see {@link StringStorage}
  */
@@ -38,15 +39,17 @@ export class GroupStateStorage extends StringStorage<
     // default group state
     private static defaultState = {
         enabled: false,
-        toggled: false,
+        touched: false,
     };
 
     /**
-     * Gets specified group state
+     * Returns specified group state.
      *
-     * @param groupId - group id
-     * @returns specified group state
-     * @throws error if group state data is not initialized
+     * @param groupId Group id.
+     *
+     * @returns Specified group state.
+     *
+     * @throws Error if group state data is not initialized.
      */
     public get(groupId: number): GroupStateData | undefined {
         if (!this.data) {
@@ -57,11 +60,12 @@ export class GroupStateStorage extends StringStorage<
     }
 
     /**
-     * Sets specified group state
+     * Sets specified group state.
      *
-     * @param groupId - group id
-     * @param state - group state
-     * @throws error if group state data is not initialized
+     * @param groupId Group id.
+     * @param state Group state.
+     *
+     * @throws Error if group state data is not initialized.
      */
     public set(groupId: number, state: GroupStateData): void {
         if (!this.data) {
@@ -74,10 +78,11 @@ export class GroupStateStorage extends StringStorage<
     }
 
     /**
-     * Delete specified group state
+     * Delete specified group state.
      *
-     * @param groupId - group id
-     * @throws error if group state data is not initialized
+     * @param groupId Group id.
+     *
+     * @throws Error if group state data is not initialized.
      */
     public delete(groupId: number): void {
         if (!this.data) {
@@ -90,10 +95,11 @@ export class GroupStateStorage extends StringStorage<
     }
 
     /**
-     * Gets list of enabled groups ids
+     * Returns list of enabled groups ids.
      *
-     * @returns list of enabled groups ids
-     * @throws error if group state data is not initialized
+     * @returns List of enabled groups ids.
+     *
+     * @throws Error if group state data is not initialized.
      */
     public getEnabledGroups(): number[] {
         if (!this.data) {
@@ -107,13 +113,14 @@ export class GroupStateStorage extends StringStorage<
     }
 
     /**
-     * Enables specified groups
+     * Enables specified groups.
      *
-     * @param groupIds - list of groups to enable
-     * @param toggled - mark groups as toggled on enabling
-     * @throws error if group state data is not initialized
+     * @param groupIds List of groups to enable.
+     * @param touched Mark groups as touched on enabling.
+     *
+     * @throws Error if group state data is not initialized.
      */
-    public enableGroups(groupIds: number[], toggled = true): void {
+    public enableGroups(groupIds: number[], touched = true): void {
         if (!this.data) {
             throw GroupStateStorage.createNotInitializedError();
         }
@@ -124,7 +131,7 @@ export class GroupStateStorage extends StringStorage<
             if (groupId !== undefined) {
                 this.data[groupId] = {
                     enabled: true,
-                    toggled,
+                    touched,
                 };
             }
         }
@@ -133,13 +140,14 @@ export class GroupStateStorage extends StringStorage<
     }
 
     /**
-     * Disables specified groups
+     * Disables specified groups.
      *
-     * @param groupIds - list of groups to disable
-     * @param toggled - mark groups as toggled on disabling
-     * @throws error if group state data is not initialized
+     * @param groupIds List of groups to disable.
+     * @param touched Mark groups as touched on disabling.
+     *
+     * @throws Error if group state data is not initialized.
      */
-    public disableGroups(groupIds: number[], toggled = true): void {
+    public disableGroups(groupIds: number[], touched = true): void {
         if (!this.data) {
             throw GroupStateStorage.createNotInitializedError();
         }
@@ -150,7 +158,7 @@ export class GroupStateStorage extends StringStorage<
             if (groupId !== undefined) {
                 this.data[groupId] = {
                     enabled: false,
-                    toggled,
+                    touched,
                 };
             }
         }
@@ -159,11 +167,12 @@ export class GroupStateStorage extends StringStorage<
     }
 
     /**
-     * Sets {@link defaultState} for new groups, found in passed {@link Metadata}
+     * Sets {@link defaultState} for new groups, found in passed {@link Metadata}.
      *
-     * @param states - current {@link GroupStateStorageData}
-     * @param metadata - app {@link Metadata}
-     * @returns - updated {@link GroupStateStorageData}
+     * @param states Current {@link GroupStateStorageData}.
+     * @param metadata App {@link Metadata}.
+     *
+     * @returns Updated {@link GroupStateStorageData}.
      */
     public static applyMetadata(
         states: GroupStateStorageData,
@@ -180,14 +189,19 @@ export class GroupStateStorage extends StringStorage<
         return states;
     }
 
+    /**
+     * Helper function to create a basic {@link Error} with a custom message.
+     *
+     * @returns A basic {@link Error} with a custom message.
+     */
     private static createNotInitializedError(): Error {
         return new Error('Group state data is not initialized');
     }
 }
 
 /**
- * {@link GroupStateStorage} instance, that stores
+ * {@link GroupStateStorage} Instance, that stores
  * stringified {@link GroupStateStorageData} in {@link settingsStorage} under
- * {@link SettingOption.GroupsState} key
+ * {@link SettingOption.GroupsState} key.
  */
 export const groupStateStorage = new GroupStateStorage(SettingOption.GroupsState, settingsStorage);

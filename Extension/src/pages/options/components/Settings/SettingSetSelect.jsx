@@ -17,9 +17,13 @@
  */
 
 import React from 'react';
+
+import cn from 'classnames';
+
+import { useSelect } from '../../../common/components/ui/Select/SelectProvider';
+
 import { SettingsSet } from './SettingsSet';
 import { Setting, SETTINGS_TYPES } from './Setting';
-import { useSelect } from '../../../common/components/ui/Select/SelectProvider';
 
 export const SettingSetSelect = ({
     title,
@@ -27,6 +31,7 @@ export const SettingSetSelect = ({
     ...props
 }) => {
     const [hidden, setHidden] = useSelect(props.id);
+    const titleId = `${props.id}-title`;
 
     const handleSettingClick = (e) => {
         e.stopPropagation();
@@ -40,15 +45,17 @@ export const SettingSetSelect = ({
         // eslint-disable-next-line max-len
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
         <div
-            className="setting-checkbox setting-checkbox--button"
+            className={cn('setting-checkbox', 'setting-checkbox--button', props.className)}
             onClick={handleSettingClick}
         >
             <SettingsSet
                 title={title}
+                titleId={titleId}
                 description={description}
                 inlineControl={(
                     <Setting
                         type={SETTINGS_TYPES.SELECT}
+                        labelId={titleId}
                         {...props}
                     />
                 )}

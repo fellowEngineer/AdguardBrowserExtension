@@ -17,30 +17,37 @@
  */
 
 import React from 'react';
-import { reactTranslator } from '../../../../../common/translators/reactTranslator';
+
+import { translator } from '../../../../../common/translators/translator';
 import { Icon } from '../../../../common/components/ui/Icon';
+
 import './compare.pcss';
 
-export const Compare = ({ click, hide }) => {
+export const Compare = ({ onCompareClick, onCloseClick }) => {
     return (
-        <div className="compare">
+        <div role="alert" className="compare">
             <div className="compare__message">
-                {reactTranslator.getMessage('options_nav_better_than_extension')}
+                {translator.getMessage('options_nav_better_than_extension')}
             </div>
             <button
                 type="button"
-                className="button button--green button--m button--compare"
-                onClick={click}
+                className="button button--green-bg button--m button--compare"
+                title={translator.getMessage('options_nav_compare')}
+                onClick={onCompareClick}
             >
-                {reactTranslator.getMessage('options_nav_compare')}
+                {translator.getMessage('options_nav_compare')}
             </button>
             <button
                 type="button"
                 className="compare__close"
-                aria-label={reactTranslator.getMessage('close_button_title')}
-                onClick={hide}
+                aria-label={translator.getMessage('close_button_title')}
+                onClick={onCloseClick}
             >
-                <Icon id="#cross" />
+                <Icon
+                    id="#cross"
+                    classname="icon--24 icon--gray-default"
+                    aria-hidden="true"
+                />
             </button>
         </div>
     );

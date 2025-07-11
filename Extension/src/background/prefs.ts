@@ -17,8 +17,15 @@
  */
 import browser from 'webextension-polyfill';
 
+import { TSURLFILTER_VERSION } from '@adguard/tsurlfilter';
+import { SCRIPTLETS_VERSION } from '@adguard/scriptlets';
+
+import { TSWEBEXTENSION_VERSION, EXTENDED_CSS_VERSION } from 'tswebextension';
+
+import type { GetOptionsDataResponse } from './services/settings/types';
+
 /**
- * Extension global preferences
+ * Extension global preferences.
  */
 export class Prefs {
     public static id = browser.runtime.id;
@@ -28,4 +35,14 @@ export class Prefs {
     public static version = browser.runtime.getManifest().version;
 
     public static language = browser.i18n.getUILanguage();
+
+    public static readonly libVersions: GetOptionsDataResponse['libVersions'] = {
+        tswebextension: TSWEBEXTENSION_VERSION,
+        tsurlfilter: TSURLFILTER_VERSION,
+        scriptlets: SCRIPTLETS_VERSION,
+        extendedCss: EXTENDED_CSS_VERSION,
+        // DNR Ruleset version will be set later
+        // when the metadata is loaded (only for MV3).
+        dnrRulesets: undefined,
+    };
 }

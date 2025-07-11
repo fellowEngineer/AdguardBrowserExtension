@@ -16,42 +16,88 @@
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 import browser from 'webextension-polyfill';
-import FiltersDownloader from '@adguard/filters-downloader/browser';
 
-import { NetworkSettings } from './settings';
+import {
+    FiltersDownloader,
+    type DefinedExpressions,
+    type DownloadResult,
+} from '@adguard/filters-downloader/browser';
+import { getRuleSetPath } from '@adguard/tsurlfilter/es/declarative-converter-utils';
+import { METADATA_RULESET_ID, MetadataRuleSet } from '@adguard/tsurlfilter/es/declarative-converter';
+import { type TsWebExtension as TsWebExtensionMv3 } from '@adguard/tswebextension/mv3';
+
+import { TsWebExtension } from 'tswebextension';
+
+import { LOCAL_METADATA_FILE_NAME, LOCAL_I18N_METADATA_FILE_NAME } from '../../../../../constants';
+import { CustomFilterUtils } from '../../../common/custom-filter-utils';
+import { logger } from '../../../common/logger';
 import { UserAgent } from '../../../common/user-agent';
 import {
-    I18nMetadata,
-    i18nMetadataValidator,
-    LocalScriptRules,
-    localScriptRulesValidator,
-    Metadata,
+    type Metadata,
+    type I18nMetadata,
+    type LocalScriptRules,
     metadataValidator,
+    i18nMetadataValidator,
+    localScriptRulesValidator,
 } from '../../schema';
+import { type FilterUpdateOptions } from '../filters';
+import { NEWLINE_CHAR_REGEX } from '../../../common/constants';
+import { FiltersStoragesAdapter } from '../../storages/filters-adapter';
 
-export type NetworkConfiguration = {
-    filtersMetadataUrl?: string,
-    filterRulesUrl?: string,
-    localFiltersFolder?: string,
-    localFilterIds?: number[]
-};
+import { NetworkSettings } from './settings';
 
 export type ExtensionXMLHttpRequest = XMLHttpRequest & { mozBackgroundRequest: boolean };
+
+export type ResponseLikeXMLHttpRequest = Response
+    & Pick<ExtensionXMLHttpRequest, 'responseText' | 'mozBackgroundRequest'>;
+
+/**
+ * Hit statistics for a single filter.
+ * - Keys are rule texts (strings).
+ * - Values are the number of times the rule was applied.
+ *
+ * @example
+ * ```
+ * {
+ *   "||example.com": 3
+ * }
+ * ```
+ */
+export type FilterHitStats = {
+    [ruleText: string]: number;
+};
+
+/**
+ * Hit statistics for multiple filters.
+ * - Keys are filter IDs.
+ * - Values are the hit statistics for each filter.
+ */
+export type FiltersHitStats = {
+    [filterId: number]: FilterHitStats;
+};
+
+/**
+ * Aggregated hit statistics for all filters.
+ * - Contains a `filters` object, where keys are filter IDs and values are hit statistics for each filter.
+ */
+type HitStats = {
+    filters: FiltersHitStats;
+};
 
 /**
  * Api for working with our backend server.
  * All requests sent by this class are covered in the privacy policy:
- * http://adguard.com/en/privacy.html#browsers
+ * http://adguard.com/en/privacy.html#browsers.
  */
 export class Network {
     private settings = new NetworkSettings();
 
     /**
-     * FiltersDownloader constants
+     * FiltersDownloader constants.
      */
-    private filterCompilerConditionsConstants = {
+    private filterCompilerConditionsConstants: DefinedExpressions = {
         adguard: true,
-        adguard_ext_chromium: UserAgent.isChrome,
+        adguard_ext_chromium: UserAgent.isChromium,
         adguard_ext_firefox: UserAgent.isFirefox,
         adguard_ext_edge: UserAgent.isEdge,
         adguard_ext_safari: false,
@@ -59,42 +105,161 @@ export class Network {
     };
 
     /**
-     * Loading subscriptions map
+     * Loading subscriptions map.
      */
     private loadingSubscriptions: Record<string, boolean> = {};
 
     /**
-     * Downloads filter rules by filter ID
+     * Initializes the network settings.
      *
-     * @param filterId              Filter identifier
-     * @param forceRemote           Force download filter rules from remote server
-     * @param useOptimizedFilters   Download optimized filters flag
+     * @returns A promise that resolves when the settings are initialized.
      */
-    public async downloadFilterRules(
-        filterId: number,
-        forceRemote: boolean,
-        useOptimizedFilters: boolean,
-    ): Promise<string[]> {
-        let url: string;
-
-        if (forceRemote || this.settings.localFilterIds.indexOf(filterId) < 0) {
-            url = this.getUrlForDownloadFilterRules(filterId, useOptimizedFilters);
-        } else {
-            url = browser.runtime.getURL(`${this.settings.localFiltersFolder}/filter_${filterId}.txt`);
-            if (useOptimizedFilters) {
-                url = browser.runtime.getURL(`${this.settings.localFiltersFolder}/filter_mobile_${filterId}.txt`);
-            }
-        }
-
-        return FiltersDownloader.download(url, this.filterCompilerConditionsConstants);
+    public async init(): Promise<void> {
+        await this.settings.init();
     }
 
     /**
-     * Downloads filter rules by url
+     * Checks if filter has local copy in the extension resources or not.
      *
-     * @param url - Subscription url
+     * @param filterId Filter id.
+     *
+     * @returns True if filter has local copy, false otherwise.
      */
-    public async downloadFilterRulesBySubscriptionUrl(url: string): Promise<string[] | undefined> {
+    public isFilterHasLocalCopy(filterId: number): boolean {
+        return this.settings.localFilterIds.includes(filterId);
+    }
+
+    /**
+     * Downloads filter rules by filter ID.
+     *
+     * @param filterUpdateOptions Filter update detail.
+     * @param forceRemote Force download filter rules from remote server.
+     * @param useOptimizedFilters Download optimized filters flag.
+     * @param rawFilter Raw filter rules.
+     *
+     * @returns Downloaded filter rules.
+     *
+     * @throws An error if FiltersDownloader.downloadWithRaw() fails.
+     */
+    public async downloadFilterRules(
+        filterUpdateOptions: FilterUpdateOptions,
+        forceRemote: boolean,
+        useOptimizedFilters: boolean,
+        rawFilter?: string,
+    ): Promise<DownloadResult> {
+        let url: string = '';
+        const { filterId } = filterUpdateOptions;
+
+        if (
+            !__IS_MV3__
+            && !forceRemote
+            && this.settings.localFilterIds.indexOf(filterId) < 0
+        ) {
+            // eslint-disable-next-line max-len
+            throw new Error(`Cannot locally load filter with id ${filterId} because it is not build in the extension local resources.`);
+        }
+
+        let isLocalFilter = false;
+        if (__IS_MV3__) {
+            // `forceRemote` flag for MV3 built-in filters can be used only for custom filters.
+            const isRemote = forceRemote
+                && CustomFilterUtils.isCustomFilter(filterId);
+
+            // TODO: revert if Quick Fixes filter is back
+            // const isRemote = forceRemote
+            //     && (filterId === AntiBannerFiltersId.QuickFixesFilterId
+            //         || CustomFilterUtils.isCustomFilter(filterId));
+
+            if (isRemote) {
+                if (useOptimizedFilters) {
+                    logger.info('[ext.Network.downloadFilterRules]: optimized filters are not supported in MV3, full versions will be downloaded.');
+                }
+                url = this.getUrlForDownloadFilterRules(filterId, false);
+            }
+
+            isLocalFilter = !isRemote;
+        } else if (forceRemote || this.settings.localFilterIds.indexOf(filterId) < 0) {
+            url = this.getUrlForDownloadFilterRules(filterId, useOptimizedFilters);
+        } else {
+            const filterFileName = useOptimizedFilters
+                ? `filter_mobile_${filterId}.txt`
+                : `filter_${filterId}.txt`;
+            url = browser.runtime.getURL(`${this.settings.localFiltersFolder}/${filterFileName}`);
+            isLocalFilter = true;
+        }
+
+        // local filters do not support patches, that is why we always download them fully
+        if (isLocalFilter || filterUpdateOptions.ignorePatches || !rawFilter) {
+            // TODO: Check, if this comment is correct and understandable.
+            // For MV3 we load local filters not from files, but from the
+            // prepared data in filters storage, to which we write the binary
+            // data from @adguard/dnr-rulesets. See AG-36824 for details.
+            if (__IS_MV3__) {
+                // TODO: revert if Quick Fixes filter is back
+                // if (__IS_MV3__ && filterId !== AntiBannerFiltersId.QuickFixesFilterId) {
+                // TODO: Check if its needed
+                await (TsWebExtension as unknown as typeof TsWebExtensionMv3).syncRuleSetWithIdb(
+                    filterId,
+                    'filters/declarative',
+                );
+                const rawFilterList = await FiltersStoragesAdapter.getRawFilterList(filterId);
+
+                if (!rawFilterList) {
+                    throw new Error(`Cannot find filter with id ${filterId}`);
+                }
+
+                return {
+                    filter: rawFilterList.split(NEWLINE_CHAR_REGEX),
+                    rawFilter: rawFilterList,
+                };
+            }
+
+            // full remote filter update for MV2
+            const result = await FiltersDownloader.downloadWithRaw(
+                url,
+                {
+                    force: true,
+                    definedExpressions: this.filterCompilerConditionsConstants,
+                    verbose: logger.isVerbose(),
+                    // Disable checksum checking for local filters, because we
+                    // apply preprocessing for them, during which some rules may
+                    // be changed, and as a result, the filter checksum will
+                    // become invalid.
+                    validateChecksum: !isLocalFilter,
+                    // use true because we know that our filters have checksums
+                    validateChecksumStrict: true,
+                },
+            );
+            return result;
+        }
+
+        return FiltersDownloader.downloadWithRaw(
+            url,
+            {
+                rawFilter,
+                definedExpressions: this.filterCompilerConditionsConstants,
+                verbose: logger.isVerbose(),
+                validateChecksum: true,
+                // use true because we know that our filters have checksums
+                validateChecksumStrict: true,
+            },
+        );
+    }
+
+    /**
+     * Downloads filter rules by url. Needed for custom filter lists.
+     *
+     * @param url Subscription url.
+     * @param rawFilter Raw filter rules.
+     * @param force Boolean flag to download filter fully or by patches.
+     *
+     * @returns Downloaded filter rules.
+     */
+    public async downloadFilterRulesBySubscriptionUrl(
+        url: string,
+        rawFilter?: string,
+        force?: boolean,
+    ): Promise<DownloadResult | undefined> {
         if (url in this.loadingSubscriptions) {
             return;
         }
@@ -103,16 +268,29 @@ export class Network {
 
         try {
             // TODO: runtime validation
-            const lines = await FiltersDownloader.download(url, this.filterCompilerConditionsConstants) as string[];
+            const downloadData = await FiltersDownloader.downloadWithRaw(
+                url,
+                {
+                    definedExpressions: this.filterCompilerConditionsConstants,
+                    force,
+                    rawFilter,
+                    verbose: logger.isVerbose(),
+                    validateChecksum: true,
+                    // use false because we know that custom filters might not have checksums
+                    validateChecksumStrict: false,
+                },
+            );
 
             delete this.loadingSubscriptions[url];
 
-            if (lines[0] && lines[0].indexOf('[') === 0) {
-                // [Adblock Plus 2.0]
-                lines.shift();
+            // Get the first rule to check if it is an adblock agent (like [Adblock Plus 2.0]). If so, ignore it.
+            const firstRule = downloadData.filter[0]?.trim();
+
+            if (firstRule && firstRule.startsWith('[') && firstRule.endsWith(']')) {
+                downloadData.filter.shift();
             }
 
-            return lines;
+            return downloadData;
         } catch (e: unknown) {
             delete this.loadingSubscriptions[url];
             const message = e instanceof Error
@@ -124,21 +302,36 @@ export class Network {
     }
 
     /**
-     * Loads filter groups metadata
+     * Loads filters metadata from local file.
+     * For MV3, it loads metadata from the metadata ruleset file.
      *
-     * @throws Error if metadata is invalid
+     * @returns Object of {@link Metadata}.
      *
-     * @returns @see {@link Metadata}
+     * @throws Error if metadata is invalid.
      */
     public async getLocalFiltersMetadata(): Promise<Metadata> {
-        const url = browser.runtime.getURL(`${this.settings.localFiltersFolder}/filters.json`);
+        let url: string;
 
-        let response: ExtensionXMLHttpRequest;
+        if (__IS_MV3__) {
+            // For MV3, the filters metadata is stored in the metadata ruleset.
+            // The reason for this is that it allows us to perform extension updates
+            // where only the JSON files of the rulesets are changed.
+            const metadataRuleSetPath = getRuleSetPath(
+                METADATA_RULESET_ID,
+                `${this.settings.localFiltersFolder}/declarative`,
+            );
+            url = browser.runtime.getURL(metadataRuleSetPath);
+        } else {
+            // Otherwise, metadata is stored in a separate JSON file.
+            url = browser.runtime.getURL(`${this.settings.localFiltersFolder}/${LOCAL_METADATA_FILE_NAME}`);
+        }
+
+        let response: ExtensionXMLHttpRequest | ResponseLikeXMLHttpRequest;
 
         try {
-            response = await Network.executeRequestAsync(url, 'application/json');
+            response = await Network.fetchJson(url);
         } catch (e: unknown) {
-            const exMessage = e instanceof Error ? e.message : 'couldn\'t load local filters metadata';
+            const exMessage = e instanceof Error ? e.message : 'could not load local filters metadata';
             throw Network.createError(exMessage, url);
         }
 
@@ -147,7 +340,19 @@ export class Network {
         }
 
         try {
-            const metadata = JSON.parse(response.responseText);
+            let metadata: unknown;
+            if (__IS_MV3__) {
+                const metadataRuleSet = MetadataRuleSet.deserialize(response.responseText);
+                // Filters metadata is stored as an additional property in the metadata ruleset.
+                const filtersMetadata = metadataRuleSet.getAdditionalProperty('metadata') || {};
+                metadata = {
+                    version: metadataRuleSet.getAdditionalProperty('version'),
+                    versionTimestampMs: metadataRuleSet.getAdditionalProperty('versionTimestampMs'),
+                    ...filtersMetadata,
+                };
+            } else {
+                metadata = JSON.parse(response.responseText);
+            }
             return metadataValidator.parse(metadata);
         } catch (e: unknown) {
             // TODO: Return regular error
@@ -157,21 +362,21 @@ export class Network {
     }
 
     /**
-     * Loads filter groups metadata from local file
+     * Loads filter groups metadata from local file.
      *
-     * @throws Error if metadata is invalid
+     * @returns Object of {@link I18nMetadata}.
      *
-     * @returns @see {@link I18nMetadata}
+     * @throws Error if metadata is invalid.
      */
     public async getLocalFiltersI18nMetadata(): Promise<I18nMetadata> {
-        const url = browser.runtime.getURL(`${this.settings.localFiltersFolder}/filters_i18n.json`);
+        const url = browser.runtime.getURL(`${this.settings.localFiltersFolder}/${LOCAL_I18N_METADATA_FILE_NAME}`);
 
-        let response: ExtensionXMLHttpRequest;
+        let response: ExtensionXMLHttpRequest | ResponseLikeXMLHttpRequest;
 
         try {
-            response = await Network.executeRequestAsync(url, 'application/json');
+            response = await Network.fetchJson(url);
         } catch (e: unknown) {
-            const exMessage = e instanceof Error ? e.message : 'couldn\'t load local filters i18n metadata';
+            const exMessage = e instanceof Error ? e.message : 'could not load local filters i18n metadata';
             throw Network.createError(exMessage, url);
         }
 
@@ -190,21 +395,22 @@ export class Network {
     }
 
     /**
-     * Loads script rules from local file
+     * Loads script rules from local file.
+     * This method should be called only in the Firefox AMO.
      *
-     * @throws Error if metadata is invalid
+     * @returns Array of string script rules.
      *
-     * @returns Array of string script rules
+     * @throws Error if metadata is invalid.
      */
     public async getLocalScriptRules(): Promise<LocalScriptRules> {
         const url = browser.runtime.getURL(`${this.settings.localFiltersFolder}/local_script_rules.json`);
 
-        let response: ExtensionXMLHttpRequest;
+        let response: ExtensionXMLHttpRequest | ResponseLikeXMLHttpRequest;
 
         try {
-            response = await Network.executeRequestAsync(url, 'application/json');
+            response = await Network.fetchJson(url);
         } catch (e: unknown) {
-            const exMessage = e instanceof Error ? e.message : 'couldn\'t load local script rules';
+            const exMessage = e instanceof Error ? e.message : 'could not load local script rules';
             throw Network.createError(exMessage, url);
         }
 
@@ -222,13 +428,15 @@ export class Network {
     }
 
     /**
-     * Downloads metadata from backend
+     * Downloads metadata from backend.
      *
-     * @throws Error if metadata is invalid
+     * @returns Object of {@link Metadata}.
+     *
+     * @throws Error if metadata is invalid.
      */
     public async downloadMetadataFromBackend(): Promise<Metadata> {
         const url = this.settings.filtersMetadataUrl;
-        const response = await Network.executeRequestAsync(url, 'application/json');
+        const response = await Network.fetchJson(url);
         if (!response?.responseText) {
             throw new Error(`Empty response: ${response}`);
         }
@@ -242,17 +450,14 @@ export class Network {
     }
 
     /**
-     * Downloads i18n metadata from backend and returns it
+     * Downloads i18n metadata from backend and returns it.
      *
-     * @throws Error if metadata is invalid
+     * @returns Object of {@link I18nMetadata}.
      *
-     * @returns @see {@link I18nMetadata}
+     * @throws Error if metadata is invalid.
      */
     public async downloadI18nMetadataFromBackend(): Promise<I18nMetadata> {
-        const response = await Network.executeRequestAsync(
-            this.settings.filtersI18nMetadataUrl,
-            'application/json',
-        );
+        const response = await Network.fetchJson(this.settings.filtersI18nMetadataUrl);
 
         if (!response?.responseText) {
             throw new Error(`Empty response: ${response}`);
@@ -267,120 +472,107 @@ export class Network {
     }
 
     /**
-     * Checks specified host hashes with our safebrowsing service
+     * Checks specified host hashes with our safebrowsing service.
      *
-     * @param hashes - Host hashes
+     * @param hashes Host hashes.
+     *
+     * @returns Response from the safebrowsing service.
      */
-    public async lookupSafebrowsing(hashes: string[]): Promise<ExtensionXMLHttpRequest> {
+    public async lookupSafebrowsing(hashes: string[]): Promise<ExtensionXMLHttpRequest | ResponseLikeXMLHttpRequest> {
         const url = `${this.settings.safebrowsingLookupUrl}?prefixes=${encodeURIComponent(hashes.join('/'))}`;
-        const response = await Network.executeRequestAsync(url, 'application/json');
+        const response = await Network.fetchJson(url);
         return response;
-    }
-
-    /**
-     * Sends feedback from the user to our server
-     *
-     * @param url - URL
-     * @param messageType - Message type
-     * @param comment - Message text
-     */
-    public sendUrlReport(url: string, messageType: string, comment: string): void {
-        let params = `url=${encodeURIComponent(url)}`;
-        params += `&messageType=${encodeURIComponent(messageType)}`;
-        if (comment) {
-            params += `&comment=${encodeURIComponent(comment)}`;
-        }
-        params = this.addKeyParameter(params);
-
-        const request = new XMLHttpRequest();
-        request.open('POST', this.settings.reportUrl);
-        request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        request.send(params);
     }
 
     /**
      * Sends filter hits stats to backend server.
      * This method is used if user has enabled "Send statistics for ad filters usage".
      * More information about ad filters usage stats:
-     * http://adguard.com/en/filter-rules-statistics.html
+     * http://adguard.com/en/filter-rules-statistics.html.
      *
-     * @param stats - {@link HitStats}
+     * @param stats Sent stats.
      */
-    public sendHitStats(stats: string): void {
-        const request = new XMLHttpRequest();
-        request.open('POST', this.settings.ruleStatsUrl);
-        request.setRequestHeader('Content-type', 'application/json');
-        request.send(stats);
+    public async sendHitStats(stats: HitStats): Promise<void> {
+        const statsString = JSON.stringify(stats);
+
+        await fetch(this.settings.ruleStatsUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: statsString,
+        });
     }
 
     /**
-     * URL for downloading AG filter
+     * URL for downloading AG filter.
      *
-     * @param filterId - Filter identifier
-     * @param useOptimizedFilters - if true, download optimized filters
+     * @param filterId Filter identifier.
+     * @param useOptimizedFilters If true, download optimized filters.
      *
-     * @returns url for filter downloading
+     * @returns Url for filter downloading.
+     *
+     * @throws Error if filter rules URL is not defined.
      */
-    private getUrlForDownloadFilterRules(filterId: number, useOptimizedFilters: boolean): string {
+    public getUrlForDownloadFilterRules(filterId: number, useOptimizedFilters: boolean): string {
+        if (!this.settings.filterRulesUrl
+            || !this.settings.optimizedFilterRulesUrl) {
+            throw new Error('Filter rules URL is not defined');
+        }
+
         const url = useOptimizedFilters ? this.settings.optimizedFilterRulesUrl : this.settings.filterRulesUrl;
         return url.replaceAll('{filter_id}', String(filterId));
     }
 
     /**
-     * Appends request key to url
+     * Appends request key to url.
      *
-     * @param url - url string
+     * @param url Url string.
      *
-     * @returns url with key query param
+     * @returns Url with key query param.
      */
     private addKeyParameter(url: string): string {
         return `${url}&key=${this.settings.apiKey}`;
     }
 
     /**
-     * Executes async request
+     * Makes a request for json.
      *
-     * @param url Url
-     * @param contentType Content type
+     * @param url Url.
+     *
+     * @returns Response with type {@link ResponseLikeXMLHttpRequest} to be
+     * compatible with XMLHttpRequest.
      */
-    private static async executeRequestAsync(url: string, contentType: string): Promise<ExtensionXMLHttpRequest> {
-        return new Promise((resolve, reject) => {
-            const request = new XMLHttpRequest() as ExtensionXMLHttpRequest;
-            try {
-                request.open('GET', url);
-                request.setRequestHeader('Content-type', contentType);
-                request.setRequestHeader('Pragma', 'no-cache');
-                request.overrideMimeType(contentType);
-                request.mozBackgroundRequest = true;
-                request.onload = function (): void {
-                    resolve(request);
-                };
-
-                const errorCallbackWrapper = (errorMessage: string) => {
-                    return (e: unknown) => {
-                        let errorText = errorMessage;
-                        if (e instanceof Error) {
-                            errorText = `${errorText}: ${e?.message}`;
-                        }
-                        const error = new Error(`Error: "${errorText}", statusText: ${request.statusText}`);
-                        reject(error);
-                    };
-                };
-
-                request.onerror = errorCallbackWrapper('An error occurred');
-                request.onabort = errorCallbackWrapper('Request was aborted');
-                request.ontimeout = errorCallbackWrapper('Request stopped by timeout');
-                request.send(null);
-            } catch (ex) {
-                reject(ex);
-            }
+    private static async fetchJson(url: string): Promise<ResponseLikeXMLHttpRequest> {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
         });
+
+        const responseText = await response.text();
+
+        // TODO: Use fetch response directly.
+        return {
+            ...response,
+            mozBackgroundRequest: true,
+            responseText,
+        };
     }
 
+    /**
+     * Creates a custom network error to throw it to a higher level.
+     *
+     * @param message Error message.
+     * @param url Url where the error occurred.
+     * @param response Network response information {@link ExtensionXMLHttpRequest}.
+     * @param originError Original error.
+     *
+     * @returns Error "wrapper".
+     */
     private static createError(
         message: string,
         url: string,
-        response?: ExtensionXMLHttpRequest,
+        response?: ExtensionXMLHttpRequest | ResponseLikeXMLHttpRequest,
         originError?: Error,
     ): Error {
         let errorMessage = `

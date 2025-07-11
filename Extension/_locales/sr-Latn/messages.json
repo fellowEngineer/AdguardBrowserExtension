@@ -14,17 +14,38 @@
     "options_filters_empty_title": {
         "message": "Ništa nije pronađeno"
     },
+    "options_filters_of_group": {
+        "message": "Filteri grupe \"%groupName%\""
+    },
     "options_antibanner_custom_filter_already_exists": {
         "message": "Prilagođen filter je već dodat"
     },
+    "options_filters_annoyances_consent_title": {
+        "message": "Pažljivo pročitajte pre nego što omogućite filtere za nerviranje"
+    },
+    "options_filters_annoyances_consent_description": {
+        "message": "Ako želite da omogućite jedan ili više filtera za nerviranje, bićete omogućeni. Oni blokiraju elemente koji nisu povezani sa sadržajem Veb lokacije ili povezani, ali nerviraju vaše korisničko iskustvo. Vlasnici veb lokacija mogu smatrati ove elemente obaveznim: ako ih blokirate, možda kršite njihove uslove; neke funkcionalnosti Web lokacija možda nisu dostupne ili možda neće ispravno funkcionisati. Razumete i slažete se da ste isključivo odgovorni da se pridržavate uslova korišćenja web sajtova koje posećujete i da AdGuard nije odgovoran za vaše pridržavanje uslova korišćenja web sajtova koje posećujete."
+    },
+    "options_filters_annoyances_consent_question": {
+        "message": "Omogućite filtere?"
+    },
+    "options_filters_annoyances_consent_filter_policy": {
+        "message": "Za detalje o tome šta AdGuardovi filteri za nerviranje blokiraju, pogledajte <a>Smernice filtera<\/a>"
+    },
+    "options_filters_annoyances_consent_enable_button": {
+        "message": "Omogući"
+    },
     "popup_header_cta_link": {
-        "message": "Blokiraj još?"
+        "message": "Kako poboljšati zaštitu"
     },
     "popup_header_update_filters": {
         "message": "Proveri da li postoje ažuriranja filtera"
     },
     "options_popup_import_settings_wrong_file_ext": {
         "message": "Oznaka datoteke mora biti %extension%"
+    },
+    "popup_resume_protection_button": {
+        "message": "Nastavi"
     },
     "popup_adguard_for_ios": {
         "message": "AdGuard za iOS"
@@ -41,11 +62,17 @@
     "options_filters_filter_updated": {
         "message": "ažurirano:"
     },
+    "options_filters_filter_tags": {
+        "message": "Filter oznake"
+    },
+    "options_filters_back_button": {
+        "message": "Vrati se"
+    },
     "options_popup_version_update_disable_notification": {
         "message": "Isključi obaveštenja"
     },
     "popup_adguard_footer_title": {
-        "message": "Nabavi AdGuard za tvoj mobilni"
+        "message": "Zaštitite svoj mobilni uređaj"
     },
     "options_popup_call_to_action": {
         "message": "Unesi validan URL ili putanju do fajla filtera u polje iznad."
@@ -54,7 +81,7 @@
         "message": "Bićete pretplaćeni na taj filter."
     },
     "options_popup_url_title": {
-        "message": "Prijava na novi filter"
+        "message": "Nova pretplata filtera"
     },
     "options_popup_url_placeholder": {
         "message": "Unesi URL ili putanju"
@@ -70,6 +97,30 @@
     },
     "options_popup_check_false_description": {
         "message": "Greška tokom dodavanja prilagođenih filtera."
+    },
+    "options_add_custom_filter_modal_title": {
+        "message": "Dodaj prilagođeni filter"
+    },
+    "options_add_custom_filter_modal_checking_filter": {
+        "message": "Provera vaših filtera..."
+    },
+    "options_add_custom_filter_modal_error_title": {
+        "message": "Nije uspelo dodavanje prilagođenog filtera"
+    },
+    "options_add_custom_filter_modal_error_subtitle": {
+        "message": "Pokušajte ponovo ili obratite se podršci"
+    },
+    "options_add_custom_filter_modal_add_button": {
+        "message": "Dodaj"
+    },
+    "options_add_custom_filter_modal_filter_name": {
+        "message": "Ime filtera:"
+    },
+    "options_add_custom_filter_modal_filter_trusted": {
+        "message": "Pouzdano"
+    },
+    "options_add_custom_filter_modal_filter_trusted_description": {
+        "message": "Neke filter pravila mogu značajno promeniti vaše iskustvo pregledanja i ugroziti vašu privatnost. Obavezno koristite filtere samo od pouzdanih razvijatelja"
     },
     "options_popup_try_again_button": {
         "message": "Pokušaj ponovo"
@@ -99,7 +150,8 @@
         "message": "AdGuard blokator reklama"
     },
     "description": {
-        "message": "Neuporedivo proširenje protiv reklama i iskačućih prozora. Blokira reklame na Facebook, YouTube i svim drugim veb lokacijama."
+        "message": "Neuporedivo proširenje protiv reklama i iskačućih prozora. Blokira reklame na Facebook, YouTube i svim drugim veb lokacijama.",
+        "description": "TEXT MAX LENGTH: 132"
     },
     "background_tab_title": {
         "message": "Pozadinska kartica"
@@ -108,31 +160,37 @@
         "message": "Lista dozvoljenih"
     },
     "options_allowlist_desc": {
-        "message": "AdGuard ne filtrira sajtove sa dozvoljene liste."
+        "message": "AdGuard ne filtrira veb sajtove sa dozvoljene liste"
     },
     "options_allowlist_invert": {
         "message": "Okreni listu dozvoljenih"
     },
     "options_allowlist_invert_desc": {
-        "message": "Odblokiraj reklame svuda osim na listi dozvoljenih."
+        "message": "Odblokirajte reklame svuda osim za dozvoljenu listu"
     },
     "options_allowlist_alert_invert": {
         "message": "Lista dozvoljenih je okrenuta. Reklame su blokirane samo na sajtovima koji dodati na listu. <a>Iskljuci<\/a>"
+    },
+    "options_allowlist_leave_subtitle": {
+        "message": "Vaše promene u dozvoljenoj listi će biti izgubljene"
     },
     "options_userfilter": {
         "message": "Korisnički filter"
     },
     "filtering_log_modified_rules": {
-        "message": "Modifikovana pravila:"
+        "message": "Modifikovana pravila: %rules_count%"
+    },
+    "filtering_log_stealth_rules": {
+        "message": "Pravila za zaštitu od praćenja: %rules_count%"
     },
     "filtering_log_privacy_applied_rules": {
-        "message": "Nevidljivi način rada je primenjen"
+        "message": "Zaštita od praćenja primenjena"
     },
     "filtering_log_in_allowlist": {
         "message": "Sajt je dozvoljen"
     },
     "filtering_log_hide_referrer": {
-        "message": "Preporuka skrivena od trećih strana"
+        "message": "Referer sakriven od trećih strana"
     },
     "filtering_log_hide_search_queries": {
         "message": "Vaši upiti za pretragu su skriveni"
@@ -173,6 +231,12 @@
     "options_antibanner_custom_group": {
         "message": "Prilagođeno"
     },
+    "options_antibanner_custom_group_description": {
+        "message": "Koristite filtere nezavisnih proizvođača sa AdGuard-om"
+    },
+    "options_filters_enabled_per_group": {
+        "message": "Omogućen: %current% od %total%"
+    },
     "options_filters_enabled": {
         "message": "Uključeno:"
     },
@@ -188,11 +252,17 @@
     "options_filters_filter_trusted_tag_desc": {
         "message": "Označili ste ovaj filter kao pouzdan."
     },
+    "options_filters_info_mv3_total_rules": {
+        "message": "Ukupno pravila: %num%"
+    },
     "options_add_custom_filter": {
         "message": "Dodaj prilagođeni filter"
     },
     "options_empty_custom_filter": {
         "message": "Još uvek nemate nijedan prilagođeni filter"
+    },
+    "options_loader_applying_changes": {
+        "message": "Primenjivanje promena..."
     },
     "options_editor_indicator_saving": {
         "message": "Čuvam..."
@@ -200,11 +270,14 @@
     "options_editor_indicator_saved": {
         "message": "Sačuvano"
     },
+    "options_popup_import_error_required_privacy_permission": {
+        "message": "Da biste uvezli ovu datoteku sa postavkama, dozvolite AdGuard-u da promeni vaše postavke vezane za privatnost."
+    },
     "options_popup_import_success_title": {
-        "message": "Postavke su uspešno uvežene"
+        "message": "Podešavanja su importovana"
     },
     "options_popup_import_error_title": {
-        "message": "Greška prilikom uvoza postavke"
+        "message": "Uvoz postavki nije uspeo"
     },
     "options_popup_import_error_file_description": {
         "message": "Nešto je pošlo naopako."
@@ -215,32 +288,71 @@
     "options_popup_trusted_filter_description": {
         "message": "Pouzdani filteri mogu koristiti moćna pravila filtriranja što može biti opasno. Ne označavajte ovu kućicu osim ako potpuno niste sigurni u to."
     },
-    "popup_site_filtering_state": {
-        "message": "Zaštita na ovom sajtu"
-    },
     "popup_site_filtering_state_secure_page": {
         "message": "Bezbedna stranica"
+    },
+    "popup_site_filtering_state_loading": {
+        "message": "Učitavam..."
+    },
+    "popup_site_filtering_state_enabling": {
+        "message": "Uključujem zaštitu..."
     },
     "popup_site_filtering_state_enabled": {
         "message": "Zaštita je uključena"
     },
+    "popup_site_filtering_state_disabling": {
+        "message": "Onemogućavanje zaštite..."
+    },
     "popup_site_filtering_state_disabled": {
         "message": "Zaštita je isključena"
+    },
+    "popup_site_filtering_state_pausing": {
+        "message": "Pauziram zaštitu..."
     },
     "popup_site_filtering_state_paused": {
         "message": "Zaštita je pauzirana"
     },
+    "popup_site_filtering_state_resuming": {
+        "message": "Nastavljam zaštitu..."
+    },
+    "popup_site_filtering_state_subtitle_all_websites": {
+        "message": "za sve Web lokacije"
+    },
     "popup_site_exception_information": {
         "message": "Filtriranje je isključeno zato što može ometati rad ove stranice."
+    },
+    "popup_tab_current_website": {
+        "message": "Trenutni sajt"
     },
     "popup_tab_blocked_count": {
         "message": "Blokirano: %num%"
     },
     "popup_tab_blocked_all_count": {
-        "message": "Ukupno: %num%"
+        "message": "Ukupno blokirano: %num%"
     },
     "popup_statistics_total": {
         "message": "Ukupno"
+    },
+    "popup_statistics_category_label": {
+        "message": "Kategorija statistike"
+    },
+    "popup_statistics_all_categories": {
+        "message": "Sve"
+    },
+    "popup_statistics_category_advertising": {
+        "message": "Oglašavanje"
+    },
+    "popup_statistics_category_trackers": {
+        "message": "Praćenja"
+    },
+    "popup_statistics_category_social_media": {
+        "message": "Društvene mreže"
+    },
+    "popup_statistics_category_cdn": {
+        "message": "CDN"
+    },
+    "popup_statistics_category_other": {
+        "message": "Ostalo"
     },
     "popup_statistics_week_days_mon": {
         "message": "Pon"
@@ -299,6 +411,9 @@
     "popup_statistics_months_dec": {
         "message": "Dec"
     },
+    "options_popup_updating_filters": {
+        "message": "Ažuriram filtere..."
+    },
     "options_popup_update_title_error": {
         "message": "Greška prilikom ažuriranja filtera"
     },
@@ -333,46 +448,31 @@
         "message": "Saznajte više"
     },
     "popup_block_site_ads_option": {
-        "message": "Blokiraj reklame na ovom sajtu"
+        "message": "Blokirajte oglase ručno"
     },
     "popup_security_report": {
         "message": "Izveštaj o bezbednosti stranice"
     },
-    "popup_reset_custom_rules": {
-        "message": "Resetuj sva korisnička pravila za ovu stranicu"
+    "popup_reset_page_user_rules": {
+        "message": "Izbriši korisnička pravila za ovu veb stranicu"
     },
     "popup_open_settings": {
-        "message": "AdGuard postavke"
+        "message": "Otvoriti AdGuard postavke"
     },
-    "popup_block_site_ads_android": {
-        "message": "Blokiraj reklame na stranici"
-    },
-    "popup_security_report_android": {
-        "message": "Izveštaj o bezbednosti"
-    },
-    "popup_in_allowlist_android": {
-        "message": "Na listi dozvoljenih"
-    },
-    "popup_site_protection_disabled_android": {
-        "message": "Zaštita je pauzirana."
-    },
-    "popup_open_log_android": {
-        "message": "Dnevnik prečišćavanja"
+    "popup_protection_button": {
+        "message": "AdGuard zaštita"
     },
     "context_block_site_ads": {
-        "message": "Blokiraj reklamu na ovoj stranici..."
-    },
-    "context_block_site_element": {
-        "message": "Blokiraj Element..."
+        "message": "Blokirajte oglase ručno"
     },
     "context_security_report": {
-        "message": "Otvori izveštaj bezbednosti za ovu stranicu..."
+        "message": "Izveštaj o bezbednosti stranice"
     },
     "context_complaint_website": {
-        "message": "Pošaljite žalbu o ovom sajtu..."
+        "message": "Prijavi poteškoću"
     },
     "context_site_filtering_disabled": {
-        "message": "AdGuard ne može da radi na ovom domenu"
+        "message": "AdGuard ne može filtrirati ovu stranicu"
     },
     "context_disable_protection": {
         "message": "Pauziraj AdGuard zaštitu"
@@ -384,10 +484,10 @@
         "message": "AdGuard zaštita je pauzirana."
     },
     "context_open_settings": {
-        "message": "AdGuard postavke..."
+        "message": "AdGuard postavke"
     },
     "context_open_log": {
-        "message": "Dnevnik prečišćavanja..."
+        "message": "Dnevnik filtriranja"
     },
     "context_site_exception": {
         "message": "Ova stranica se nalazi u izuzecima."
@@ -413,6 +513,9 @@
     "filters_download_loading": {
         "message": "Molimo Vas da sačekate dok se baza filtera učitava..."
     },
+    "post_install_loading": {
+        "message": "Učitavanje proširenja..."
+    },
     "filtering_modal_element": {
         "message": "Element:"
     },
@@ -432,10 +535,10 @@
         "message": "Pretraga u karticama"
     },
     "filtering_log_preserve_log_off": {
-        "message": "Završi dnevnik: onemogućeno"
+        "message": "Ne snimaj log"
     },
     "filtering_log_preserve_log_on": {
-        "message": "Zadrži dnevnik: omogućeno"
+        "message": "Snimaj log"
     },
     "filtering_refresh_tab_short": {
         "message": "Osveži"
@@ -464,8 +567,14 @@
     "filtering_table_filter": {
         "message": "Filter"
     },
+    "filtering_table_action": {
+        "message": "Radnja"
+    },
+    "filtering_table_open_details": {
+        "message": "Otvoreni detalji"
+    },
     "filtering_table_empty_reload_page_desc": {
-        "message": "<reset>Onemogući filtere<\/reset> ili <refresh>osveži stranicu<\/refresh> kako bi videli dnevnik događaja filtriranja."
+        "message": "Nema pronađenih podataka. <reset>Onemogućite filtere<\/reset> ili <refresh>osvežite stranicu<\/refresh> da biste pregledali evidenciju."
     },
     "filtering_modal_info_title": {
         "message": "Zahtevaj detalje"
@@ -486,7 +595,7 @@
         "message": "Pravila:"
     },
     "filtering_modal_privacy": {
-        "message": "Nevidljivi način rada:"
+        "message": "Zaštita od praćenja:"
     },
     "filtering_modal_filter": {
         "message": "Filter:"
@@ -516,7 +625,7 @@
         "message": "Stanje:"
     },
     "filtering_modal_status_text_error": {
-        "message": "Odgovor nije primljen"
+        "message": "Nije uspelo učitavanje pregleda. Pokušajte ponovo"
     },
     "filtering_modal_status_text_loading": {
         "message": "Učitavam..."
@@ -605,6 +714,12 @@
     "filtering_log_status_modified": {
         "message": "Izmenjeno"
     },
+    "options_skip_to_main_content": {
+        "message": "Pređi na glavni sadržaj"
+    },
+    "options_navigation": {
+        "message": "Navigacija"
+    },
     "options_settings": {
         "message": "AdGuard postavke"
     },
@@ -615,7 +730,7 @@
         "message": "Blokiraj reklame u pretrazi"
     },
     "options_block_acceptable_ads_desc": {
-        "message": "Otarasite se <a>sajtova koji se promovišu kao i reklama koje su zasnovane na sadržaju<\/a> a pojavljuju se u rezultatima pretrage."
+        "message": "Uklonite samoproklamirajuće oglase sa veb stranica i kontekstualne oglase iz rezultata pretrage. <a>Saznajte više<\/a>"
     },
     "options_show_blocked_ads_count_title": {
         "message": "Prikaži brojblokiranih reklama na ikonici AdGuard dodatka"
@@ -624,13 +739,13 @@
         "message": "Automatski uključi najpogodnije filtere"
     },
     "options_enable_autodetect_filter_desc": {
-        "message": "Filteri za određeni jezik će se uključiti u zavisnosti od jezika sajta."
+        "message": "Filteri specifični za jezik će se uključiti u zavisnosti od jezika sajta"
     },
     "options_select_theme": {
         "message": "Teme"
     },
     "options_theme_selector_system": {
-        "message": "Sistemski"
+        "message": "Sistemski podrazumevano"
     },
     "options_theme_selector_light": {
         "message": "Svetla"
@@ -651,7 +766,7 @@
         "message": "Ostavite povratne informacije"
     },
     "options_privacy": {
-        "message": "Nevidljivi način rada"
+        "message": "Zaštita od praćenja"
     },
     "options_update_antibanner_filters": {
         "message": "Proveri da li postoje nadogradnje filtera"
@@ -666,7 +781,7 @@
         "message": "Automatsko ažuriranje filtera"
     },
     "options_set_update_interval_desc": {
-        "message": "Za efektnije blokiranje, filteri se moraju redovno ažurirati."
+        "message": "Za efikasnije blokiranje, filtere je potrebno redovno ažurirati"
     },
     "options_userfilter_export": {
         "message": "Izvezi"
@@ -674,17 +789,35 @@
     "options_editor_save": {
         "message": "Sačuvaj"
     },
+    "options_editor_leave_title": {
+        "message": "Napustiti bez čuvanja?"
+    },
+    "options_editor_leave_confirm": {
+        "message": "Da, napusti"
+    },
+    "options_editor_leave_cancel": {
+        "message": "Nazad na uređivanje"
+    },
     "options_userfilter_import": {
         "message": "Uvezi"
     },
     "options_userfilter_description_key": {
         "message": "Ovde možete dodati vaša pravila. OVo se preporučuje za napredne korisnike koji su upoznati sa HTML\/CSS. pročitajte <a>uputstvo za pravila filtera<\/a> da saznate kako da napišete vaša pravila filtera."
     },
+    "options_userfilter_subtitle_key": {
+        "message": "Podesite blokiranje reklama pomoću sopstvenih pravila filtriranja"
+    },
+    "options_userfilter_line_break": {
+        "message": "Prelom reda"
+    },
     "options_userfilter_line_break_off": {
-        "message": "Prelom reda: isključen"
+        "message": "Prelom reda: Onemogućen"
     },
     "options_userfilter_line_break_on": {
-        "message": "Prelom reda: uključen"
+        "message": "Prelom reda: Uključen"
+    },
+    "options_userfilter_leave_subtitle": {
+        "message": "Vaše promene u pravilima će biti izgubljene"
     },
     "options_open_changelog": {
         "message": "Dnevnik promena"
@@ -709,6 +842,105 @@
     },
     "options_miscellaneous_settings": {
         "message": "Dodatne postavke"
+    },
+    "options_rule_syntax": {
+        "message": "Sintaksa pravila"
+    },
+    "options_rule_limits": {
+        "message": "Ograničenja pravila"
+    },
+    "options_rule_limits_description": {
+        "message": "Chrome ograničava broj pravila koja mogu biti primenjena"
+    },
+    "options_rule_limits_dynamic": {
+        "message": "Dinamička pravila"
+    },
+    "options_rule_limits_dynamic_user_rules": {
+        "message": "Pravila koja je dodao korisnik, kao što su <user_rules>korisnička pravila<\/user_rules>, <allowlist>sa liste dozvoljenih sajtova<\/allowlist> i <custom_filters>prilagođeni filteri<\/custom_filters>"
+    },
+    "options_rule_limits_dynamic_unsafe": {
+        "description": "Note: First dollar sign is used to escape the second one, so eventually only one dollar sign will be displayed",
+        "message": "Nebezbedna dinamička pravila (koriste se za neke napredne modifikatore, kao što su $$redirect ili $$cookie) — uključeno u pravila koja je dodao korisnik"
+    },
+    "options_rule_limits_dynamic_regex": {
+        "message": "Regex pravila — uključena u pravila dodata od strane korisnika"
+    },
+    "options_rule_limits_static_rulesets": {
+        "message": "Statička pravila"
+    },
+    "options_rule_limits_static_rulesets_builtin": {
+        "message": "<a>Ugrađeni filteri<\/a>, kao što su blokiranje dosadnih oglasa ili filteri specifični za jezik"
+    },
+    "options_rule_limits_static_rules": {
+        "message": "Statična pravila"
+    },
+    "options_rule_limits_static_rules_all": {
+        "message": "Pravila iz <a>ugrađenih filtera<\/a>"
+    },
+    "options_rule_limits_static_rules_regex": {
+        "message": "Regex pravila — uključena u gore navedeno"
+    },
+    "options_rule_limits_numbers": {
+        "message": "%current% od %maximum%"
+    },
+    "options_rule_limits_warning_title": {
+        "message": "Preglednik je izmenio listu aktivnih filtera"
+    },
+    "options_rule_limits_warning_explanation_title": {
+        "message": "Šta se desilo?"
+    },
+    "options_rule_limits_warning_explanation_description": {
+        "message": "Ograničenje aktivnih ugrađenih pravila je prekoračeno nakon ažuriranja ili dodavanja novog proširenja. Po Manifestu V3, vaš Chrome preglednik je reagovao onemogućavanjem svih ugrađenih filtera proširenja osim podrazumevanih."
+    },
+    "options_rule_limits_warning_list_enabled_before_title": {
+        "message": "Filteri omogućeni pre ažuriranja"
+    },
+    "options_rule_limits_warning_list_enabled_now_title": {
+        "message": "Filteri su sada omogućeni"
+    },
+    "options_rule_limits_warning_actions_title": {
+        "message": "Vaši mogući postupci"
+    },
+    "options_rule_limits_warning_actions_delete_filters": {
+        "message": "Opcija 1. Iz preglednika izbrišite nepotrebna proširenja za blokiranje oglasa. Da biste ponovo aktivirali filtere pomenute u odeljku \"Filteri omogućeni pre ažuriranja\", kliknite na <a>ponovo aktivirajte filtere.<\/a>"
+    },
+    "options_rule_limits_warning_actions_install_app": {
+        "message": "Opcija 2. Instalirajte aplikaciju AdGuard Ad Blokator reklama: nema ograničenja za pravila filtriranja. <a>Nabavite AdGuard aplikaciju<\/a>"
+    },
+    "options_rule_limits_warning_actions_close_warning_one_filter": {
+        "message": "Opcija 3. Ako ste zadovoljni trenutno omogućenim podrazumevanim filterom, <a>zatvorite ovo upozorenje.<\/a>"
+    },
+    "options_rule_limits_warning_actions_close_warning_multiple_filters": {
+        "message": "Opcija 3. Ako ste zadovoljni trenutno omogućenim podrazumevnim filtrima, <a>zatvorite ovo upozorenje.<\/a>"
+    },
+    "options_all_limits_exceeded_warning": {
+        "message": "Dostigli ste granicu aktivnih ugrađenih pravila. Vaš preglednik je izmenio listu aktivnih ugrađenih filtera. Broj omogućених filtera je promenjen sa %expected% na %current%."
+    },
+    "options_limits_warning_static_filters": {
+        "message": "Dostigli ste granicu aktivnih ugrađenih filtera. %maximum% od %current% filtera je omogućeno. Da biste aktivirali nova pravila, onemogućite neke ugrađene filtere."
+    },
+    "options_limits_warning_static_rules": {
+        "message": "Dostigli ste granicu aktivnih ugrađenih pravila. %maximum% od %current% pravila je omogućeno. Da biste aktivirali nova pravila, onemogućite neka ugrađena pravila."
+    },
+    "options_limits_warning_static_regex_rules": {
+        "message": "Dostigli ste granicu aktivnih ugrađenih regex pravila. %maximum% od %current% regex pravila je omogućeno. Da biste aktivirali nova pravila, onemogućite neka ugrađena pravila."
+    },
+    "options_limits_warning_dynamic_rules": {
+        "message": "Dostigli ste granicu pravila koja je dodao korisnik. %maximum% od %current% pravila je omogućeno."
+    },
+    "options_limits_warning_dynamic_unsafe_rules": {
+        "message": "Dostigli ste granicu nesigurnih pravila koja je dodao korisnik. %maximum% od %current% nesigurna pravila su omogućena."
+    },
+    "options_limits_warning_dynamic_regex_rules": {
+        "message": "Dostigli ste granicu regex pravila koja je dodao korisnik. %maximum% od %current% regex pravila je omogućeno."
+    },
+    "options_developer_mode_required": {
+        "message": "Vaš browser ograničava <external-link>neke tipove pravila<\/external-link>. Da biste primenili sva pravila, <settings-link>omogućite režim za programere<\/settings-link>",
+        "description": "Note: <settings-link> and <external-link> are just <a> tags, so it would be rendered as a link."
+    },
+    "options_allow_user_scripts_required": {
+        "message": "Vaš browser ograničava <external-link>neke tipove pravila<\/external-link>. Da biste primenili sva pravila, kliknite na <settings-link>Dozvoli korisničke skripte<\/settings-link>",
+        "description": "Note: <settings-link> and <external-link> are just <a> tags, so it would be rendered as a link."
     },
     "options_show_adguard_full_version_title": {
         "message": "Prikaži informacije naAdGuard punoj verziji"
@@ -738,7 +970,7 @@
         "message": "Učestvujte u razvoju AdGuard filtera"
     },
     "options_collect_hit_stats_desc": {
-        "message": "Šaljite <a>anonimne statističke podatke o korišćenju filtera<\/a> što će nam pomoći da ih unapredimo."
+        "message": "Pošaljite <a>anonimne statistike o korišćenju filtera oglasa<\/a> kako biste pomogli AdGuard-u da unapredi svoje filtere"
     },
     "options_show_context_menu_title": {
         "message": "Dodaj AdGuard stavku u kontekstni meni preglednika"
@@ -747,31 +979,31 @@
         "message": "Koristi optimizovane filtere"
     },
     "options_use_optimized_filters_desc": {
-        "message": "Llista filtera optimizovana za mobilne uređaje"
+        "message": "Koristi kraće verzije filtera sa samo najpopularnijim pravilima za uštedu saobraćaja. Pogodniji za mobilne pretraživače"
     },
     "options_privacy_title": {
-        "message": "Nevidljivi način rada"
+        "message": "Zaštita od praćenja"
     },
     "options_privacy_desc": {
-        "message": "Zaštitite vaš identitet i osetljive lične informacije od hiljada mrežnih praćenja blokiranjem najpopularnijih načina praćenja."
+        "message": "Zaštitite svoj identitet i osetljive lične informacije od hiljada mrežnih praćenja blokiranjem najpopularnijih metoda praćenja"
     },
     "options_hide_referrer_title": {
-        "message": "Sakrij Referrer od trećih lica"
+        "message": "Sakrij Referer od trećih lica"
     },
     "options_hide_referrer_desc": {
-        "message": "Sprečite treća lica da znaju koje sajtove posećujete."
+        "message": "Sprečite treće strane da znaju koje veb sajtove posećujete"
     },
     "options_hide_search_queries_title": {
         "message": "Sakrijte vaš unos pretrage"
     },
     "options_hide_search_queries_desc": {
-        "message": "Sakrijte unose za sajtove posećene preko pretraživača"
+        "message": "Sakrijte upite za veb sajtove koje ste posetili preko pretraživača"
     },
     "options_send_not_track_title": {
-        "message": "Slanje signala Veb lokacijama da vas ne prate"
+        "message": "Zamolite Web lokacije da vas ne prate"
     },
     "options_send_not_track_desc": {
-        "message": "Pošaljite <gpc>globalnu kontrolu<\/gpc> <dnt>privatnosti i ne pratite<\/dnt> signale Veb lokacijama koje posećujete."
+        "message": "Pošaljite <gpc>Globalnu kontrolu privatnosti<\/gpc> i <dnt>Ne prati<\/dnt> signale na veb sajtovima koje posećujete"
     },
     "options_stripped_tracking_parameters": {
         "message": "Parametri praćenja uklonjeni"
@@ -786,37 +1018,37 @@
         "message": "Ukloni zaglavlje X-Client-Data"
     },
     "options_remove_client_data_desc": {
-        "message": "Ne dozvoli da Google Chrome šalje svoje informacije o izmenama i verziji na Google domene"
+        "message": "Blokirajte Google Chrome da ne šalje informacije o svojoj verziji i izmenama na Google domene"
     },
     "options_disable_webrtc_title": {
         "message": "Onemogući WebRTC"
     },
     "options_disable_webrtc_desc": {
-        "message": "WebRTC može da procuri vašu IP adresu čak i ako koristite proxy server ili VPN. Onemogućavanje WebRTC-a može da razbije neke Veb lokacije."
+        "message": "WebRTC može procuriti vašu IP adresu čak i ako koristite proxy ili VPN. Onemogućavanje WebRTC-a može razbiti neke veb sajtove"
     },
     "options_strip_tracking_params_title": {
         "message": "Ukloni parametre praćenja"
     },
     "options_strip_tracking_params_description": {
-        "message": "Uklanjanje parametara iz Veb zahteva pomoću AdGuard FILTERA ZA PRAĆENJE URL adrese"
+        "message": "Uklonite parametre iz veb zahteva pomoću AdGuard filtera za praćenje URL adresa"
     },
     "options_block_known_trackers_title": {
         "message": "Blokiraj praćenja"
     },
     "options_block_known_trackers_description": {
-        "message": "Blokiranje alatki za veb analitiku pomoću filtera AdGuard zaštita od praćenja"
+        "message": "Blokirajte tragače i alate za analizu veba pomoću AdGuard filtera za zaštitu od praćenja"
     },
     "options_third_party_title": {
         "message": "Samouništavajući kolačići trećeg lica"
     },
     "options_third_party_desc": {
-        "message": "Ograničite trajanje kolačića treće strane (minuti)."
+        "message": "Ograničite vek trajanja kolačića treće strane (minute)"
     },
     "options_first_party_title": {
         "message": "Samouništavajući kolačići prvog lica (ne preporučuje se)"
     },
     "options_first_party_desc": {
-        "message": "Ograničite trajanje kolačića prvog lica (minuti)."
+        "message": "Ograničite vek trajanja kolačića prvog lica (minute)"
     },
     "popup_abuse_site": {
         "message": "Pošaljite žalbu u vezi ove stranice"
@@ -824,11 +1056,17 @@
     "popup_open_filtering_log": {
         "message": "Otvori dnevnik filtriranja"
     },
+    "popup_tabs": {
+        "message": "Kartice"
+    },
     "popup_tab_actions": {
         "message": "Radnje"
     },
     "popup_tab_statistics": {
         "message": "Statistike"
+    },
+    "popup_statistics_time_label": {
+        "message": "Statistički vremenski period"
     },
     "popup_statistics_time_day": {
         "message": "Poslednji dan"
@@ -843,7 +1081,13 @@
         "message": "Poslednja godina"
     },
     "popup_switch_button": {
-        "message": "Prekidač zaštite"
+        "message": "Zaštita za trenutni sajt"
+    },
+    "popup_limits_exceeded_warning": {
+        "message": "Vaš preglednik je izmenio listu aktivnih ugrađenih filtera"
+    },
+    "snack_on_websites_limits_exceeded_warning": {
+        "message": "Prekoračeno ograničenje pravila u AdGuard dodatku za pretraživač. Proverite svoje filtere i onemogućite one koji vam nisu potrebni"
     },
     "short_name": {
         "message": "AdGuard blokator reklama"
@@ -863,6 +1107,9 @@
     "options_about_version": {
         "message": "Verzija"
     },
+    "options_about_libs": {
+        "message": "Korišćene biblioteke"
+    },
     "options_copyright": {
         "message": "Sva prava zadržana."
     },
@@ -881,38 +1128,44 @@
     "options_filters_search": {
         "message": "Traži"
     },
+    "options_filters_search_filter": {
+        "message": "Traži filter"
+    },
     "options_about_title": {
         "message": "AdGuard proširenje za preglednike"
     },
     "group_description_adblocking": {
-        "message": "Ovde konfigurišite blokiranje reklama kako biste se nosili sa dosadnim banerima, iskačući prozorima, video reklamama jednom i zauvek."
+        "message": "Konfigurišite blokiranje oglasa ovde kako biste se nosili sa dosadnim banerima, iskačućim prozorima, video reklamama i slično, jednom zauvek"
     },
     "group_description_stealth": {
-        "message": "Zaštitite vaš identitet i osetljive lične informacije od hiljada mrežnih praćenja blokiranjem najpopularnijih načina praćenja."
+        "message": "Zaštitite svoj identitet i osetljive lične informacije od hiljada mrežnih praćenja blokiranjem svih poznatih popularnih metoda praćenja"
     },
     "group_description_social": {
-        "message": "Sakrijte neželjene\"Sviđa mi se\"\/\"Podeli\" dugmiće i ostale vidžete društvenih mreža."
+        "message": "Sakrijte neželjene dugmiće \"Sviđa mi se\"\/\"Podeli\" i druge vidžete društvenih mreža"
     },
     "group_description_annoyances": {
-        "message": "Uklonite iskačuće prozore i druga dosadna obaveštenja kao što su obaveštenja o kolačićima."
+        "message": "Uklonite iskačuće prozore i druga dosadna obaveštenja kao što su obaveštenja o kolačićima"
     },
     "group_description_security": {
-        "message": "Zaštitite se od zlonamernog softvera, fišinga i drugih pretnji na mreži."
+        "message": "Zaštitite se od zlonamernog softvera, fišinga i drugih pretnji na mreži"
     },
     "group_description_miscellaneous": {
-        "message": "Više postavki za još više podešavanja vašeg surfovanja sa AdGuard-om."
+        "message": "Više postavki za još jaču kontrolu vašeg surfovanja sa AdGuard-om"
     },
     "group_description_custom": {
         "message": "Stvorite vaše filtere i fino filtrirajte veb kako vam se sviđa."
     },
     "group_description_lang": {
-        "message": "Ne ograničavajte sebe — Blokirajte reklame na sajtovima na svim jezicima."
+        "message": "Ne ograničavajte sebe — blokirajte oglase na veb sajtovima na svim jezicima"
     },
     "fullscreen_user_rules_title": {
         "message": "Korisnički filter"
     },
     "options_user_rules_editor_stub_title": {
-        "message": "Uređivač je već otvoren"
+        "message": "Uređivač otvoren u drugom prozoru"
+    },
+    "options_user_rules_editor_stub_subtitle": {
+        "message": "Vaša pravila će se ovde pojaviti nakon što ga zatvorite"
     },
     "options_user_rules_editor_stub_go_to_editor_button": {
         "message": "Idi na uređivač"
@@ -947,26 +1200,35 @@
     "filtering_log_details_modal_try_again": {
         "message": "Pokušaj ponovo"
     },
+    "filtering_log_tag_request_source": {
+        "message": "Zahtev za izvor"
+    },
     "filtering_log_tag_tooltip_first_party": {
-        "message": "Samo zahteve prve strane"
+        "message": "Zahtevi prve strane"
     },
     "filtering_log_tag_tooltip_third_party": {
-        "message": "Samo zahteve treće strane"
+        "message": "Zahtevi treće strane"
+    },
+    "filtering_log_tag_request_status": {
+        "message": "Status zahteva"
     },
     "filtering_log_tag_tooltip_regular": {
-        "message": "Samo zahtevi obrađeni bez filtriranja"
+        "message": "Zahtevi obrađeni bez filtriranja"
     },
     "filtering_log_tag_tooltip_allowed": {
-        "message": "Samo dozvoljeni i odblokirani zahtevi"
+        "message": "Dozvoljeni i odblokirani zahtevi"
     },
     "filtering_log_tag_tooltip_blocked": {
-        "message": "Samo blokirani zahtevi"
+        "message": "Blokirani zahtevi"
     },
     "filtering_log_tag_tooltip_modified": {
-        "message": "Samo izmenjeni zahtevi"
+        "message": "Izmenjeni zahtevi"
     },
     "filtering_log_tag_tooltip_user_rules": {
-        "message": "Samo zahtevi izmenjeni korisničkim pravilima"
+        "message": "Zahtevi na koje utiču korisnička pravila"
+    },
+    "filtering_log_tag_request_type": {
+        "message": "Vrsta zahteva"
     },
     "filtering_log_tag_tooltip_html": {
         "message": "Dokumenti i poddokumenti"
@@ -987,7 +1249,7 @@
         "message": "Medijum"
     },
     "filtering_log_tag_tooltip_other": {
-        "message": "Fontovi, pingovi, WebRTC, WebSocket, itd."
+        "message": "Fontovi, pingovi, WebRTC, WebSocket..."
     },
     "filtering_log_badge_tooltip_third_party": {
         "message": "Zahteve treće strane"
@@ -998,6 +1260,9 @@
     "filtering_log_badge_tooltip_http_status_code": {
         "message": "HTTP kod statusa"
     },
+    "filtering_log_assumed_rule_description": {
+        "message": "Ovo je pretpostavljeno pravilo. Za detalje pogledajte našu <a>bazu znanja<\/a>"
+    },
     "options_stealth_general_title": {
         "message": "General"
     },
@@ -1006,6 +1271,9 @@
     },
     "options_stealth_miscellaneous_title": {
         "message": "Razno"
+    },
+    "options_coming_soon": {
+        "message": "Stiže uskoro"
     },
     "blocking_pages_malware": {
         "message": "Ova stranica na <strong>%host%<\/strong> je prijavljena kao štetna pa je na osnovu vaših bezbednosnih postavki blokirana."
@@ -1044,6 +1312,24 @@
         "message": "Sakrij pun tekst"
     },
     "close_button_title": {
-        "message": "zatvori"
+        "message": "Zatvori"
+    },
+    "clear_button_title": {
+        "message": "Očisti"
+    },
+    "filtering_modal_applied_rules": {
+        "message": "| Primenjeno pravilo: | Primenjena pravila: | Primenjena pravila:",
+        "description": "WARNING: correct number of plural forms is required"
+    },
+    "filtering_modal_assumed_rules": {
+        "message": "| Pretpostavljeno pravilo: | Pretpostavljena pravila: | Pretpostavljena pravila:",
+        "description": "WARNING: correct number of plural forms is required"
+    },
+    "filtering_modal_original_rules": {
+        "message": "| Originalno pravilo: | Originalna pravila: | Originalna pravila:",
+        "description": "WARNING: correct number of plural forms is required"
+    },
+    "filtering_modal_declarative_rule": {
+        "message": "DNR pravilo:"
     }
 }

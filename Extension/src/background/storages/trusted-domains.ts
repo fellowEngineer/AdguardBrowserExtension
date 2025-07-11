@@ -16,17 +16,18 @@
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 import { TRUSTED_DOCUMENTS_CACHE_KEY } from '../../common/constants';
-import { TrustedDomainData } from '../schema';
+import { type TrustedDomainData } from '../schema';
 import { StringStorage } from '../utils/string-storage';
-import { storage } from './main';
+
+import { browserStorage } from './shared-instances';
 
 /**
- * {@link StringStorage} instance, that stores
- * {@link TrustedDomainData} list in {@link storage} under
- * {@link TRUSTED_DOCUMENTS_CACHE_KEY} key
+ * Instance of {@link StringStorage}, that stores
+ * {@link TrustedDomainData} list in {@link browserStorage} under
+ * {@link TRUSTED_DOCUMENTS_CACHE_KEY} key.
  */
 export const trustedDomainsStorage = new StringStorage<
     typeof TRUSTED_DOCUMENTS_CACHE_KEY,
     TrustedDomainData[],
     'async'
->(TRUSTED_DOCUMENTS_CACHE_KEY, storage);
+>(TRUSTED_DOCUMENTS_CACHE_KEY, browserStorage);

@@ -17,13 +17,15 @@
  */
 
 import React from 'react';
+
 import cn from 'classnames';
 import { format } from 'date-fns';
 
+import { translator } from '../../../../common/translators/translator';
 import { Icon } from '../../../common/components/ui/Icon';
 import { Popover } from '../../../common/components/ui/Popover';
-import { reactTranslator } from '../../../../common/translators/reactTranslator';
 import { StatusMode, getStatusMode } from '../../filteringLogStatus';
+
 import {
     colorMap,
     getItemClassName,
@@ -51,10 +53,33 @@ export const Status = (props) => {
     const isModified = mode === StatusMode.MODIFIED;
     const areNetworkBadgesVisible = requestUrl && !isModified;
     const statusTooltipText = getStatusTitle(mode);
+    const statusToShow = statusCode || '----';
+
+    // This text is rendered only for Screen readers as summary of the status
+    let requestStatusSummary = `${timeString}.`;
+
+    if (areNetworkBadgesVisible) {
+        requestStatusSummary += ` ${translator.getMessage('filtering_log_tag_request_status')}: ${statusTooltipText}.`;
+
+        if (!isBlocked) {
+            requestStatusSummary += ` ${translator.getMessage('filtering_log_badge_tooltip_http_status_code')}: ${statusToShow}.`;
+        }
+    }
+
+    if (method) {
+        requestStatusSummary += ` ${translator.getMessage('filtering_log_badge_tooltip_http_req_method')}: ${method}.`;
+    }
+
+    if (requestThirdParty) {
+        requestStatusSummary += ` ${translator.getMessage('filtering_log_badge_tooltip_third_party')}.`;
+    }
 
     return (
         <div className="status-wrapper">
-            <div className="status">
+            <span className="sr-only">
+                {requestStatusSummary}
+            </span>
+            <div className="status" aria-hidden="true">
                 {/* Time string may have different width
                     Preventing layout shift with fixed value
                 */}
@@ -65,18 +90,30 @@ export const Status = (props) => {
                     <>
                         <div className={itemClassNames}>
                             <Popover text={statusTooltipText}>
-                                <Icon id={statusCode ? '#transfer-status' : '#arrow-status'} classname="status__icon" />
+                                <div className="status__icon--wrapper">
+                                    <Icon
+                                        id={statusCode ? '#transfer-status' : '#arrow-status'}
+                                        classname="status__icon"
+                                        aria-hidden="true"
+                                    />
+                                </div>
                             </Popover>
                         </div>
                         <div className={cn(itemClassNames, 'status__item_centered')}>
                             {isBlocked ? (
-                                <Popover text={reactTranslator.getMessage('filtering_log_status_blocked')}>
-                                    <Icon id="#ban" classname="status__icon" />
+                                <Popover text={translator.getMessage('filtering_log_status_blocked')}>
+                                    <div className="status__icon--wrapper">
+                                        <Icon
+                                            id="#ban"
+                                            classname="status__icon"
+                                            aria-hidden="true"
+                                        />
+                                    </div>
                                 </Popover>
                             ) : (
-                                <Popover text={reactTranslator.getMessage('filtering_log_badge_tooltip_http_status_code')}>
+                                <Popover text={translator.getMessage('filtering_log_badge_tooltip_http_status_code')}>
                                     <div className={badgeClassNames}>
-                                        {statusCode || '---'}
+                                        {statusToShow}
                                     </div>
                                 </Popover>
                             )}
@@ -85,7 +122,7 @@ export const Status = (props) => {
                 )}
                 {method && (
                     <div className="status__item">
-                        <Popover text={reactTranslator.getMessage('filtering_log_badge_tooltip_http_req_method')}>
+                        <Popover text={translator.getMessage('filtering_log_badge_tooltip_http_req_method')}>
                             <div className="status__badge status__badge--transparent">
                                 {method}
                             </div>
@@ -94,8 +131,8 @@ export const Status = (props) => {
                 )}
                 {requestThirdParty && (
                     <div className="status__item">
-                        <Popover text={reactTranslator.getMessage('filtering_log_badge_tooltip_third_party')}>
-                            <div className="tag tag--third_party tag--party">
+                        <Popover text={translator.getMessage('filtering_log_badge_tooltip_third_party')}>
+                            <div className="tag tag--third_party tag--party tag--third_party--info">
                                 3P
                             </div>
                         </Popover>

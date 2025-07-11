@@ -18,12 +18,14 @@
 
 import React, { useContext } from 'react';
 import { observer } from 'mobx-react';
+
 import classnames from 'classnames';
 
-import { userRulesEditorStore } from './UserRulesEditorStore';
 import { Popover } from '../ui/Popover';
 import { Icon } from '../ui/Icon';
-import { reactTranslator } from '../../../../common/translators/reactTranslator';
+import { translator } from '../../../../common/translators/translator';
+
+import { userRulesEditorStore } from './UserRulesEditorStore';
 
 /**
  * This button is extracted in the separate file
@@ -36,19 +38,27 @@ export const ToggleWrapButton = observer(({ onClick }) => {
         'actions__btn--active': store.userRulesEditorWrapState,
     });
 
+    const iconId = store.userRulesEditorWrapState ? '#line-break-on' : '#line-break-off';
+
     const tooltipText = store.userRulesEditorWrapState
-        ? reactTranslator.getMessage('options_userfilter_line_break_on')
-        : reactTranslator.getMessage('options_userfilter_line_break_off');
+        ? translator.getMessage('options_userfilter_line_break_on')
+        : translator.getMessage('options_userfilter_line_break_off');
 
     return (
         <Popover text={tooltipText}>
             <button
                 type="button"
+                role="switch"
                 className={lineBreakClassNames}
                 onClick={onClick}
-                aria-label={tooltipText}
+                aria-checked={store.userRulesEditorWrapState}
+                aria-label={translator.getMessage('options_userfilter_line_break')}
             >
-                <Icon classname="icon--extend" id="#line-break" />
+                <Icon
+                    id={iconId}
+                    classname="icon--24 icon--gray-default"
+                    aria-hidden="true"
+                />
             </button>
         </Popover>
     );

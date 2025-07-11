@@ -1,11 +1,20 @@
 (function(source, args) {
+    const flag = "done";
+    const uniqueIdentifier = source.uniqueId + source.name + "_" + (Array.isArray(args) ? args.join("_") : "");
+    if (source.uniqueId) {
+        if (Window.prototype.toString[uniqueIdentifier] === flag) {
+            return;
+        }
+    }
     function GoogleAnalytics(source) {
+        var _window$googleAnalyti;
         var Tracker = function Tracker() {};
         var proto = Tracker.prototype;
         proto.get = noopFunc;
         proto.set = noopFunc;
         proto.send = noopFunc;
         var googleAnalyticsName = window.GoogleAnalyticsObject || "ga";
+        var queue = (_window$googleAnalyti = window[googleAnalyticsName]) === null || _window$googleAnalyti === void 0 ? void 0 : _window$googleAnalyti.q;
         function ga(a) {
             var len = arguments.length;
             if (len === 0) {
@@ -36,7 +45,14 @@
         ga.remove = noopFunc;
         ga.loaded = true;
         window[googleAnalyticsName] = ga;
-        var _window = window, dataLayer = _window.dataLayer, google_optimize = _window.google_optimize;
+        if (Array.isArray(queue)) {
+            var push = function push(arg) {
+                ga(...arg);
+            };
+            queue.push = push;
+            queue.forEach(push);
+        }
+        var {dataLayer: dataLayer, google_optimize: google_optimize} = window;
         if (dataLayer instanceof Object === false) {
             return;
         }
@@ -75,34 +91,15 @@
         }
         hit(source);
     }
-    function hit(source) {
-        if (source.verbose !== true) {
-            return;
-        }
-        try {
-            var log = console.log.bind(console);
-            var trace = console.trace.bind(console);
-            var prefix = source.ruleText || "";
-            if (source.domainName) {
-                var AG_SCRIPTLET_MARKER = "#%#//";
-                var UBO_SCRIPTLET_MARKER = "##+js";
-                var ruleStartIndex;
-                if (source.ruleText.indexOf(AG_SCRIPTLET_MARKER) > -1) {
-                    ruleStartIndex = source.ruleText.indexOf(AG_SCRIPTLET_MARKER);
-                } else if (source.ruleText.indexOf(UBO_SCRIPTLET_MARKER) > -1) {
-                    ruleStartIndex = source.ruleText.indexOf(UBO_SCRIPTLET_MARKER);
-                }
-                var rulePart = source.ruleText.slice(ruleStartIndex);
-                prefix = "".concat(source.domainName).concat(rulePart);
-            }
-            log("".concat(prefix, " trace start"));
-            if (trace) {
-                trace();
-            }
-            log("".concat(prefix, " trace end"));
-        } catch (e) {}
-        if (typeof window.__debug === "function") {
-            window.__debug(source);
+    function hit(e) {
+        if (e.verbose) {
+            try {
+                var n = console.trace.bind(console), i = "[AdGuard] ";
+                "corelibs" === e.engine ? i += e.ruleText : (e.domainName && (i += `${e.domainName}`), 
+                e.args ? i += `#%#//scriptlet('${e.name}', '${e.args.join("', '")}')` : i += `#%#//scriptlet('${e.name}')`), 
+                n && n(i);
+            } catch (e) {}
+            "function" == typeof window.__debug && window.__debug(e);
         }
     }
     function noopFunc() {}
@@ -115,6 +112,14 @@
     const updatedArgs = args ? [].concat(source).concat(args) : [ source ];
     try {
         GoogleAnalytics.apply(this, updatedArgs);
+        if (source.uniqueId) {
+            Object.defineProperty(Window.prototype.toString, uniqueIdentifier, {
+                value: flag,
+                enumerable: false,
+                writable: false,
+                configurable: false
+            });
+        }
     } catch (e) {
         console.log(e);
     }

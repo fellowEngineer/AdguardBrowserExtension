@@ -24,13 +24,15 @@ import React, {
     forwardRef,
 } from 'react';
 import { observer } from 'mobx-react';
+
 import cn from 'classnames';
 import { nanoid } from 'nanoid';
 
-import { reactTranslator } from '../../../../common/translators/reactTranslator';
+import { translator } from '../../../../common/translators/translator';
 import { Tooltip } from '../ui/Tooltip';
-import { copyToClipboardStore } from './copyToClipboardStore';
 import { AttachmentPortal } from '../AttachmentPortal';
+
+import { copyToClipboardStore } from './copyToClipboardStore';
 
 import './copy-to-clipboard.pcss';
 
@@ -86,7 +88,10 @@ export const CopyToClipboard = observer(forwardRef(({
         <div className={cn('copy-to-clipboard-wrapper', wrapperClassName)}>
             {(containerRef.current === currentContainerId) && (
                 <AttachmentPortal rootId="root-portal" position={tooltipPosition}>
-                    <Tooltip text={reactTranslator.getMessage('filtering_modal_copied')} />
+                    <Tooltip
+                        text={translator.getMessage('filtering_modal_copied')}
+                        visible
+                    />
                 </AttachmentPortal>
             )}
             <div
@@ -94,8 +99,8 @@ export const CopyToClipboard = observer(forwardRef(({
                 className={cn('copy-to-clipboard', className)}
                 style={style}
                 role="button"
-                tabIndex="0"
-                title={reactTranslator.getMessage('filtering_modal_copy_to_clipboard')}
+                tabIndex={0}
+                title={translator.getMessage('filtering_modal_copy_to_clipboard')}
                 onClick={handleClick}
                 onKeyUp={handleKeyUp}
             >

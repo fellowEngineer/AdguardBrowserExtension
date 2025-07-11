@@ -1,3 +1,9 @@
+import {
+    describe,
+    expect,
+    it,
+} from 'vitest';
+
 import { network } from '../../../../../Extension/src/background/api/network';
 import { mockFilterPath } from '../../../../helpers';
 
@@ -6,7 +12,7 @@ describe('network', () => {
         // This mock needs to simulate external request in the filters downloader
         const mockNetworkRequestPrefix = 'mock:/';
         const filePath = `${mockNetworkRequestPrefix}${mockFilterPath}`;
-        const lines = await network.downloadFilterRulesBySubscriptionUrl(filePath);
-        expect(lines).toHaveLength(2);
+        const { filter } = (await network.downloadFilterRulesBySubscriptionUrl(filePath))!;
+        expect(filter).toHaveLength(2);
     });
 });

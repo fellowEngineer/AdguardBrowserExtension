@@ -17,6 +17,7 @@
  */
 
 import { createContext } from 'react';
+
 import {
     observable,
     action,
@@ -33,7 +34,7 @@ class CopyToClipboardStore {
     }
 
     @observable
-    currentContainerId = null;
+        currentContainerId = null;
 
     tooltipTimer = null;
 

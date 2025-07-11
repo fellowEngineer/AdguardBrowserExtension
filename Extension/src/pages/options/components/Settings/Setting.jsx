@@ -20,14 +20,13 @@ import React from 'react';
 
 import { Checkbox } from '../../../common/components/ui/Checkbox';
 import { Select } from '../../../common/components/ui/Select';
+
 import { TextInput } from './TextInput';
-import { Textarea } from './Textarea';
 
 export const SETTINGS_TYPES = {
     CHECKBOX: 'checkbox',
     SELECT: 'select',
     INPUT: 'input',
-    TEXTAREA: 'textarea',
 };
 
 export const Setting = (props) => {
@@ -41,8 +40,10 @@ export const Setting = (props) => {
                 inverted,
                 value,
                 label,
+                labelId,
                 className,
                 disabled,
+                optimistic,
             } = props;
             return (
                 <Checkbox
@@ -51,8 +52,10 @@ export const Setting = (props) => {
                     inverted={inverted}
                     value={value}
                     label={label}
+                    labelId={labelId}
                     className={className}
                     disabled={disabled}
+                    optimistic={optimistic}
                 />
             );
         }
@@ -62,6 +65,7 @@ export const Setting = (props) => {
                 handler,
                 options,
                 value,
+                labelId,
             } = props;
             const changeHandler = (currentValue) => {
                 let dataValue = parseInt(currentValue, 10);
@@ -77,12 +81,21 @@ export const Setting = (props) => {
                     handler={changeHandler}
                     options={options}
                     value={value}
+                    labelId={labelId}
+                    withContext
                 />
             );
         }
         case SETTINGS_TYPES.INPUT: {
             const {
-                id, value, handler, placeholder, disabled,
+                id,
+                value,
+                handler,
+                placeholder,
+                disabled,
+                required = false,
+                minValue,
+                step,
             } = props;
             return (
                 <TextInput
@@ -91,24 +104,9 @@ export const Setting = (props) => {
                     value={value}
                     handler={handler}
                     placeholder={placeholder}
-                />
-            );
-        }
-        case SETTINGS_TYPES.TEXTAREA: {
-            const {
-                id,
-                value,
-                handler,
-                placeholder,
-                disabled,
-            } = props;
-            return (
-                <Textarea
-                    id={id}
-                    disabled={disabled}
-                    value={value}
-                    handler={handler}
-                    placeholder={placeholder}
+                    required={required}
+                    minValue={minValue}
+                    step={step}
                 />
             );
         }

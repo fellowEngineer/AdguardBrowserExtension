@@ -16,8 +16,9 @@
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { SettingOption, type Settings } from '../background/schema/settings';
+
 import { UserAgent } from './user-agent';
-import { SettingOption, Settings } from '../background/schema';
 
 export const enum AppearanceTheme {
     System = 'system',
@@ -36,11 +37,12 @@ export const DEFAULT_ALLOWLIST = [];
 export const DEFAULT_INVERTED_ALLOWLIST = [];
 
 export const defaultSettings: Settings = {
-    [SettingOption.DisableShowAdguardPromoInfo]: (!UserAgent.isWindows && !UserAgent.isMacOs) || UserAgent.isEdge,
+    [SettingOption.DisableShowAdguardPromoInfo]: !(UserAgent.isWindows || UserAgent.isMacOs) || UserAgent.isEdge,
     [SettingOption.DisableSafebrowsing]: true,
     [SettingOption.DisableCollectHits]: true,
     [SettingOption.DefaultAllowlistMode]: true,
     [SettingOption.AllowlistEnabled]: true,
+    // TODO: consider ditching optimized filters for mobile mv3 builds if (or when) they become available
     [SettingOption.UseOptimizedFilters]: UserAgent.isAndroid,
     [SettingOption.DisableDetectFilters]: false,
     [SettingOption.DisableShowAppUpdatedNotification]: false,
@@ -49,7 +51,7 @@ export const defaultSettings: Settings = {
     [SettingOption.HideReferrer]: true,
     [SettingOption.HideSearchQueries]: true,
     [SettingOption.SendDoNotTrack]: true,
-    [SettingOption.BlockChromeClientData]: UserAgent.isChrome,
+    [SettingOption.RemoveXClientData]: UserAgent.isChrome,
     [SettingOption.BlockWebRTC]: false,
     [SettingOption.SelfDestructThirdPartyCookies]: true,
     [SettingOption.SelfDestructThirdPartyCookiesTime]: DEFAULT_THIRD_PARTY_COOKIES_SELF_DESTRUCT_MIN,

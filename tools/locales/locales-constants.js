@@ -16,10 +16,16 @@
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import path from 'path';
-import fs from 'fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 
 import inputConfig from './config.json';
+
+/* eslint-disable @typescript-eslint/naming-convention */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+/* eslint-enable @typescript-eslint/naming-convention */
 
 const {
     twosky_config_path: TWOSKY_CONFIG_PATH,
@@ -50,7 +56,7 @@ const LOCALES_ABSOLUTE_PATH = path.join(__dirname, LOCALES_RELATIVE_PATH);
  */
 const LOCALE_PAIRS = {
     /**
-     * Norvegian language locale code in Crowdin is 'no'
+     * Norwegian language locale code in Crowdin is 'no'
      * Chrome recognizes both locale code 'nb' and 'no',
      * Firefox recognizes only 'nb'
      */
@@ -61,9 +67,14 @@ const LOCALE_PAIRS = {
     es_419: 'es',
 };
 
+/**
+ * List of supported locales.
+ */
+const LOCALES = Object.keys(LANGUAGES);
+
 export {
+    LOCALES,
     BASE_LOCALE,
-    LANGUAGES,
     PROJECT_ID,
     TWOSKY_CONFIG_PATH,
     API_URL,

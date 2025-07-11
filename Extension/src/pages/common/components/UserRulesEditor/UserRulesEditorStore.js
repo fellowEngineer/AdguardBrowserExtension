@@ -17,6 +17,7 @@
  */
 
 import { createContext } from 'react';
+
 import {
     action,
     computed,
@@ -28,16 +29,9 @@ import {
 import { messenger } from '../../../services/messenger';
 import {
     createSavingService,
-    EVENTS as SAVING_FSM_EVENTS,
-    STATES,
+    SavingFSMEvent,
+    SavingFSMState,
 } from '../Editor/savingFSM';
-
-const savingService = createSavingService({
-    id: 'userRules',
-    services: {
-        saveData: (_, e) => messenger.saveUserRules(e.value),
-    },
-});
 
 class UserRulesEditorStore {
     @observable settings = null;
@@ -46,19 +40,38 @@ class UserRulesEditorStore {
 
     @observable userRulesEditorWrap = null;
 
-    @observable savingUserRulesState = savingService.initialState.value;
-
     @observable userRulesExportAvailable = false;
 
     @observable userRulesEditorPrefsDropped = false;
 
+    @observable specificLimitWarningData = null;
+
+    @observable cursorPosition = null;
+
+    savingService = createSavingService({
+        id: 'userRules',
+        services: {
+            saveData: async ({ event }) => {
+                const { value, callback } = event;
+
+                await messenger.saveUserRules(value);
+
+                await callback();
+            },
+        },
+    });
+
+    @observable savingUserRulesState = this.savingService.getSnapshot().value;
+
     constructor() {
         makeObservable(this);
 
-        savingService.onTransition((state) => {
+        this.updateSetting = this.updateSetting.bind(this);
+
+        this.savingService.subscribe((state) => {
             runInAction(() => {
                 this.savingUserRulesState = state.value;
-                if (state.value === STATES.SAVING) {
+                if (state.value === SavingFSMState.Saving) {
                     this.userRulesEditorContentChanged = false;
                 }
             });
@@ -90,12 +103,17 @@ class UserRulesEditorStore {
     };
 
     @action
-    updateSetting(settingId, value) {
+    setCursorPosition = (position) => {
+        this.cursorPosition = position;
+    };
+
+    @action
+    async updateSetting(settingId, value) {
         if (this.settings) {
             this.settings.values[settingId] = value;
         }
 
-        messenger.changeUserSetting(settingId, value);
+        await messenger.changeUserSetting(settingId, value);
     }
 
     @action
@@ -103,7 +121,8 @@ class UserRulesEditorStore {
         this.userRulesEditorWrap = !this.userRulesEditorWrap;
         if (this.settings) {
             await this.updateSetting(
-                this.settings.names.UserRulesEditorWrap, this.userRulesEditorWrap,
+                this.settings.names.UserRulesEditorWrap,
+                this.userRulesEditorWrap,
             );
         }
     }
@@ -137,9 +156,22 @@ class UserRulesEditorStore {
         return false;
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    async saveUserRules(value) {
-        savingService.send(SAVING_FSM_EVENTS.SAVE, { value });
+    getCursorPosition() {
+        return this.cursorPosition;
+    }
+
+    saveUserRules(value) {
+        return new Promise((resolve, reject) => {
+            try {
+                this.savingService.send({
+                    type: SavingFSMEvent.Save,
+                    value,
+                    callback: resolve,
+                });
+            } catch (e) {
+                reject(e);
+            }
+        });
     }
 }
 

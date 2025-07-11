@@ -15,76 +15,107 @@
  * You should have received a copy of the GNU General Public License
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
-import browser from 'webextension-polyfill';
-import { SettingsConfig } from '@adguard/tswebextension';
-import { Log } from '../../../common/log';
-import { AppearanceTheme, defaultSettings } from '../../../common/settings';
+import { type SettingsConfig as SettingsConfigMV3 } from '@adguard/tswebextension/mv3';
+import { type SettingsConfig as SettingsConfigMV2 } from '@adguard/tswebextension';
 
+import { logger } from '../../../common/logger';
+import { type AppearanceTheme, defaultSettings } from '../../../common/settings';
 import {
-    AllowlistConfig,
+    type AllowlistConfig,
     AllowlistOption,
     configValidator,
-    ExtensionSpecificSettingsConfig,
+    type ExtensionSpecificSettingsConfig,
     ExtensionSpecificSettingsOption,
-    FiltersConfig,
+    type FiltersConfig,
     FiltersOption,
-    GeneralSettingsConfig,
+    type GeneralSettingsConfig,
     GeneralSettingsOption,
     RootOption,
     PROTOCOL_VERSION,
-    StealthConfig,
+    type StealthConfig,
     StealthOption,
-    UserFilterConfig,
+    type UserFilterConfig,
     UserFilterOption,
     SettingOption,
-    Settings,
+    type Settings,
     settingsValidator,
+    type Config,
 } from '../../schema';
-
 import {
     filterStateStorage,
     groupStateStorage,
     settingsStorage,
-    storage,
+    browserStorage,
 } from '../../storages';
-
 import {
     CommonFilterApi,
     CustomFilterApi,
-    CustomFilterDTO,
     FiltersApi,
     UserRulesApi,
     AllowlistApi,
+    annoyancesConsent,
 } from '../filters';
-
 import {
     ADGUARD_SETTINGS_KEY,
     AntiBannerFiltersId,
-    DOCUMENT_BLOCK_PAGE_PATH,
+    NotifierType,
+    SEPARATE_ANNOYANCE_FILTER_IDS,
 } from '../../../common/constants';
 import { settingsEvents } from '../../events';
-import { listeners } from '../../notifier';
+import { notifier } from '../../notifier';
+import { Unknown } from '../../../common/unknown';
+import { messenger } from '../../../pages/services/messenger';
+import { Prefs } from '../../prefs';
+import {
+    ASSISTANT_INJECT_OUTPUT,
+    BLOCKING_BLOCKED_OUTPUT,
+    GPC_SCRIPT_OUTPUT,
+    HIDE_DOCUMENT_REFERRER_OUTPUT,
+} from '../../../../../constants';
+import { DocumentBlockApi } from '../document-block';
+import { filteringLogApi } from '../filtering-log';
+import { network } from '../network';
+import { getZodErrorMessage } from '../../../common/error';
+import { CommonFilterUtils } from '../../../common/common-filter-utils';
+
 import { SettingsMigrations } from './migrations';
-import { Unknown } from '../../utils';
 
 export type SettingsData = {
-    names: typeof SettingOption,
-    defaultValues: Settings,
-    values: Settings,
+    names: typeof SettingOption;
+    defaultValues: Settings;
+    values: Settings;
 };
 
+/**
+ * SettingsApi is a facade class for encapsulating the work with extension
+ * settings: getting, installing, gathering tswebextension configuration from
+ * current settings, importing and exporting.
+ */
 export class SettingsApi {
+    /**
+     * Initializes settings: checks the settings from the repository and resets
+     * them to defaults if the data are not valid.
+     */
     public static async init(): Promise<void> {
-        const data = await storage.get(ADGUARD_SETTINGS_KEY);
-        const settings = settingsValidator.parse(data);
-        settingsStorage.setCache(settings);
+        try {
+            const data = await browserStorage.get(ADGUARD_SETTINGS_KEY);
+            const settings = settingsValidator.parse(data);
+            settingsStorage.setCache(settings);
+        } catch (e) {
+            logger.error('[ext.SettingsApi.init]: cannot init settings from storage:', getZodErrorMessage(e));
+            logger.info('[ext.SettingsApi.init]: reverting settings to default values');
+            const settings = { ...defaultSettings };
+
+            // Update settings in the cache and in the storage
+            settingsStorage.setData(settings);
+        }
     }
 
     /**
-     * Set setting to storage and publish setting event
+     * Set setting to storage and publish setting event.
      *
-     * @param key - setting option key
-     * @param value - settings option value
+     * @param key Setting option key.
+     * @param value Settings option value.
      */
     public static async setSetting<T extends SettingOption>(key: T, value: Settings[T]): Promise<void> {
         settingsStorage.set(key, value);
@@ -92,23 +123,28 @@ export class SettingsApi {
         await settingsEvents.publishEvent(key, value);
 
         // legacy event mediator for frontend
-        listeners.notifyListeners(listeners.SettingUpdated, {
+        notifier.notifyListeners(NotifierType.SettingUpdated, {
             propertyName: key,
             propertyValue: value,
         });
     }
 
     /**
-     * Get setting from setting storage
+     * Returns setting from setting storage.
      *
-     * @param key - setting option key
+     * @param key Setting option key.
      *
-     * @returns settings option value
+     * @returns Settings option value.
      */
     public static getSetting<T extends SettingOption>(key: T): Settings[T] {
         return settingsStorage.get(key);
     }
 
+    /**
+     * Returns settings data.
+     *
+     * @returns Object of {@link SettingsData}.
+     */
     public static getData(): SettingsData {
         return {
             names: SettingOption,
@@ -117,34 +153,58 @@ export class SettingsApi {
         };
     }
 
-    public static getTsWebExtConfiguration(): SettingsConfig {
+    /**
+     * Collects {@link SettingsConfig} for tswebextension from current extension settings.
+     *
+     * @param isMV3 Is the extension in MV3 mode.
+     *
+     * @returns Collected {@link SettingsConfig} for tswebextension.
+     */
+    public static getTsWebExtConfiguration<T extends boolean>(
+        isMV3: T,
+    ): T extends true ? SettingsConfigMV3 : SettingsConfigMV2 {
+        // pass the locale explicitly as a part of the url
+        const documentBlockingPageUrl = `${Prefs.baseUrl}${BLOCKING_BLOCKED_OUTPUT}.html?_locale=${Prefs.language}`;
+
         return {
-            documentBlockingPageUrl: browser.runtime.getURL(DOCUMENT_BLOCK_PAGE_PATH),
-            collectStats: !settingsStorage.get(SettingOption.DisableCollectHits),
+            assistantUrl: `/${ASSISTANT_INJECT_OUTPUT}.js`,
+            documentBlockingPageUrl,
+            ...(isMV3 && {
+                gpcScriptUrl: `/${GPC_SCRIPT_OUTPUT}.js`,
+                hideDocumentReferrerScriptUrl: `/${HIDE_DOCUMENT_REFERRER_OUTPUT}.js`,
+            }),
+            collectStats: !settingsStorage.get(SettingOption.DisableCollectHits) || filteringLogApi.isOpen(),
+            debugScriptlets: !isMV3 && filteringLogApi.isOpen(),
             allowlistInverted: !settingsStorage.get(SettingOption.DefaultAllowlistMode),
             allowlistEnabled: settingsStorage.get(SettingOption.AllowlistEnabled),
             stealthModeEnabled: !settingsStorage.get(SettingOption.DisableStealthMode),
             filteringEnabled: !settingsStorage.get(SettingOption.DisableFiltering),
             stealth: {
-                blockChromeClientData: settingsStorage.get(SettingOption.BlockChromeClientData),
-                hideReferrer: settingsStorage.get(SettingOption.HideReferrer),
-                hideSearchQueries: settingsStorage.get(SettingOption.HideSearchQueries),
+                blockChromeClientData: settingsStorage.get(SettingOption.RemoveXClientData),
+                // TODO: revert when will be found a better way to add exclusions for $stealth=referrer
+                // AG-34765
+                // Setting to false so that it will remove already added session rules.
+                hideReferrer: isMV3 ? false : settingsStorage.get(SettingOption.HideReferrer),
+                // TODO: revert when will be found a better way to add exclusions for $stealth=searchqueries
+                hideSearchQueries: isMV3 ? false : settingsStorage.get(SettingOption.HideSearchQueries),
                 sendDoNotTrack: settingsStorage.get(SettingOption.SendDoNotTrack),
                 blockWebRTC: settingsStorage.get(SettingOption.BlockWebRTC),
                 selfDestructThirdPartyCookies: settingsStorage.get(SettingOption.SelfDestructThirdPartyCookies),
-                selfDestructThirdPartyCookiesTime: (
-                    settingsStorage.get(SettingOption.SelfDestructThirdPartyCookiesTime)
-                ),
+                selfDestructThirdPartyCookiesTime: settingsStorage.get(SettingOption.SelfDestructThirdPartyCookiesTime),
                 selfDestructFirstPartyCookies: settingsStorage.get(SettingOption.SelfDestructFirstPartyCookies),
-                selfDestructFirstPartyCookiesTime: (
-                    settingsStorage.get(SettingOption.SelfDestructFirstPartyCookiesTime)
-                ),
+                selfDestructFirstPartyCookiesTime: settingsStorage.get(SettingOption.SelfDestructFirstPartyCookiesTime),
             },
         };
     }
 
-    public static async reset(): Promise<void> {
-        await UserRulesApi.setUserRules([]);
+    /**
+     * Resets to default settings.
+     *
+     * @param enableUntouchedGroups - Should enable untouched groups related to
+     * the default filters or not.
+     */
+    public static async reset(enableUntouchedGroups: boolean): Promise<void> {
+        await UserRulesApi.setUserRules('');
 
         // Set settings store to defaults
         settingsStorage.setData({
@@ -152,11 +212,25 @@ export class SettingsApi {
         });
 
         // Re-init filters
-        await FiltersApi.init();
+        await FiltersApi.init(false);
 
-        await CommonFilterApi.initDefaultFilters();
+        // On import should enable only groups from imported file.
+        await CommonFilterApi.initDefaultFilters(enableUntouchedGroups);
+
+        // reset trusted domains list
+        await DocumentBlockApi.reset();
+
+        // reset list of consented filter ids on reset settings
+        await annoyancesConsent.reset();
     }
 
+    /**
+     * Imports settings from the configuration string.
+     *
+     * @param configText Configuration in JSON format.
+     *
+     * @returns True if the import was successful, or false if not.
+     */
     public static async import(configText: string): Promise<boolean> {
         try {
             let json = JSON.parse(configText) as unknown;
@@ -174,7 +248,8 @@ export class SettingsApi {
 
             const validConfig = configValidator.parse(json);
 
-            await SettingsApi.reset();
+            // Should not enable default groups.
+            await SettingsApi.reset(false);
 
             SettingsApi.importExtensionSpecificSettings(
                 validConfig[RootOption.ExtensionSpecificSettings],
@@ -191,21 +266,31 @@ export class SettingsApi {
 
             return true;
         } catch (e) {
-            Log.error(e);
+            logger.error('[ext.SettingsApi.import]: cannot import settings:', getZodErrorMessage(e));
             return false;
         }
     }
 
+    /**
+     * Exports settings to string with JSON format.
+     *
+     * @returns Configuration in JSON format.
+     */
     public static async export(): Promise<string> {
-        return JSON.stringify({
+        const config: Config = {
             [RootOption.ProtocolVersion]: PROTOCOL_VERSION,
             [RootOption.GeneralSettings]: SettingsApi.exportGeneralSettings(),
             [RootOption.ExtensionSpecificSettings]: SettingsApi.exportExtensionSpecificSettings(),
             [RootOption.Filters]: await SettingsApi.exportFilters(),
             [RootOption.Stealth]: SettingsApi.exportStealth(),
-        });
+        };
+
+        return JSON.stringify(config);
     }
 
+    /**
+     * Imports general settings from object of {@link GeneralSettingsConfig}.
+     */
     private static async importGeneralSettings({
         [GeneralSettingsOption.AllowAcceptableAds]: allowAcceptableAds,
         [GeneralSettingsOption.ShowBlockedAdsCount]: showBlockedAdsCount,
@@ -218,24 +303,41 @@ export class SettingsApi {
 
         settingsStorage.set(SettingOption.DisableShowPageStats, !showBlockedAdsCount);
         settingsStorage.set(SettingOption.DisableDetectFilters, !autodetectFilters);
-        settingsStorage.set(SettingOption.DisableSafebrowsing, !safebrowsingEnabled);
-        settingsStorage.set(SettingOption.FiltersUpdatePeriod, filtersUpdatePeriod);
+        if (!__IS_MV3__) {
+            settingsStorage.set(SettingOption.DisableSafebrowsing, !safebrowsingEnabled);
+            settingsStorage.set(SettingOption.FiltersUpdatePeriod, filtersUpdatePeriod);
+        }
 
         if (appearanceTheme) {
-            settingsStorage.set(SettingOption.AppearanceTheme, appearanceTheme as AppearanceTheme);
+            settingsStorage.set(SettingOption.AppearanceTheme, appearanceTheme);
+
+            // Config is already validated in the upper level.
+            await messenger.updateFullscreenUserRulesTheme(appearanceTheme as AppearanceTheme);
         }
 
         if (allowAcceptableAds) {
-            await CommonFilterApi.loadFilterRulesFromBackend(
-                AntiBannerFiltersId.SearchAndSelfPromoFilterId,
-                false,
-            );
+            try {
+                await CommonFilterApi.loadFilterRulesFromBackend(
+                    // Since this is called on settings import we update filters without patches.
+                    { filterId: AntiBannerFiltersId.SearchAndSelfPromoFilterId, ignorePatches: false },
+                    false,
+                );
+            } catch (e) {
+                logger.error(
+                    `[ext.SettingsApi.importGeneralSettings]: Failed to load filter with id ${AntiBannerFiltersId.SearchAndSelfPromoFilterId} due to ${e}`,
+                );
+            }
             filterStateStorage.enableFilters([AntiBannerFiltersId.SearchAndSelfPromoFilterId]);
         } else {
             filterStateStorage.disableFilters([AntiBannerFiltersId.SearchAndSelfPromoFilterId]);
         }
     }
 
+    /**
+     * Exports general settings to object of {@link GeneralSettingsConfig}.
+     *
+     * @returns Object of {@link GeneralSettingsConfig}.
+     */
     private static exportGeneralSettings(): GeneralSettingsConfig {
         return {
             [GeneralSettingsOption.AllowAcceptableAds]: (
@@ -251,6 +353,9 @@ export class SettingsApi {
         };
     }
 
+    /**
+     * Imports extension specific settings from object of {@link ExtensionSpecificSettingsConfig}.
+     */
     private static importExtensionSpecificSettings({
         [ExtensionSpecificSettingsOption.UseOptimizedFilters]: useOptimizedFilters,
         [ExtensionSpecificSettingsOption.CollectHitsCount]: collectHitsCount,
@@ -269,6 +374,11 @@ export class SettingsApi {
         settingsStorage.set(SettingOption.UserRulesEditorWrap, userRulesEditorWrap);
     }
 
+    /**
+     * Exports extension specific settings to object of {@link ExtensionSpecificSettingsConfig}.
+     *
+     * @returns Object of {@link ExtensionSpecificSettingsConfig}.
+     */
     private static exportExtensionSpecificSettings(): ExtensionSpecificSettingsConfig {
         return {
             [ExtensionSpecificSettingsOption.UseOptimizedFilters]: (
@@ -295,6 +405,129 @@ export class SettingsApi {
         };
     }
 
+    /**
+     * Loads built-in filters and enables them.
+     *
+     * Firstly, tries to load filters from the backend:
+     * - if loaded successfully, enables them;
+     * - if loading fails, returns the array of filters that were not loaded
+     *   to try to load them from the local storage later.
+     *
+     * @param filterIds Array of built-in filters ids.
+     *
+     * @returns Array of filters that were not loaded from the backend.
+     *
+     * @private
+     */
+    private static async loadBuiltInFiltersRemote(filterIds: number[]): Promise<number[]> {
+        const failedFilterIds: number[] = [];
+        const filterIdsToEnable: number[] = [];
+
+        const tasks = filterIds.map(async (filterId: number) => {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await CommonFilterApi.loadFilterRulesFromBackend({ filterId, ignorePatches: true }, true);
+                filterIdsToEnable.push(filterId);
+            } catch (e) {
+                logger.debug(`[ext.SettingsApi.loadBuiltInFiltersRemote]: filter rules were not loaded from backend for filter: ${filterId}, error:`, getZodErrorMessage(e));
+                failedFilterIds.push(filterId);
+            }
+        });
+
+        await Promise.allSettled(tasks);
+
+        filterStateStorage.enableFilters(filterIdsToEnable);
+
+        return failedFilterIds;
+    }
+
+    /**
+     * Loads built-in filters from the local storage, and enables them.
+     *
+     * @param filterIds Ids of filters to load and enable.
+     *
+     * @private
+     */
+    private static async loadBuiltInFiltersLocal(filterIds: number[]): Promise<void> {
+        const filtersToEnable: number[] = [];
+
+        const tasks = filterIds.map(async (filterId: number) => {
+            try {
+                await CommonFilterApi.loadFilterRulesFromBackend({ filterId, ignorePatches: true }, false);
+
+                filtersToEnable.push(filterId);
+            } catch (e) {
+                // error may be thrown if filter is deprecated and its local copy no longer exists
+                logger.debug(`[ext.SettingsApi.loadBuiltInFiltersLocal]: filter rules were not loaded from local storage for filter: ${filterId}, error:`, getZodErrorMessage(e));
+            }
+        });
+
+        await Promise.allSettled(tasks);
+
+        filterStateStorage.enableFilters(filtersToEnable);
+    }
+
+    /**
+     * Loads built-in filters and enables them **for MV2**.
+     * Firstly, tries to load filters from the backend, if it fails, tries to load them from the embedded.
+     *
+     * @param builtInFilters Array of built-in filters ids.
+     *
+     * @private
+     */
+    private static async loadBuiltInFiltersMv2(builtInFilters: number[]): Promise<void> {
+        const remoteFailedFilterIds = await SettingsApi.loadBuiltInFiltersRemote(builtInFilters);
+
+        if (remoteFailedFilterIds.length === 0) {
+            return;
+        }
+
+        const filterIdsToLoadLocal: number[] = [];
+        const filterIdsWithNoLocalCopy: number[] = [];
+
+        remoteFailedFilterIds.forEach((filterId) => {
+            if (network.isFilterHasLocalCopy(filterId)) {
+                filterIdsToLoadLocal.push(filterId);
+            } else {
+                filterIdsWithNoLocalCopy.push(filterId);
+            }
+        });
+
+        if (filterIdsWithNoLocalCopy.length > 0) {
+            throw new Error(`There is no local copy of filters with ids: ${filterIdsWithNoLocalCopy.join(', ')}`);
+        }
+
+        logger.debug(`[ext.SettingsApi.loadBuiltInFiltersMv2]: trying to load from storage filters with ids: ${filterIdsToLoadLocal.join(', ')}`);
+        await SettingsApi.loadBuiltInFiltersLocal(filterIdsToLoadLocal);
+    }
+
+    /**
+     * Loads built-in filters and enables them **for MV3**.
+     *
+     * Checks whether the filter is supported by MV3.
+     * Tries to load them from the storage only.
+     *
+     * @param builtInFilters Array of built-in filters ids.
+     *
+     * @private
+     */
+    private static async loadBuiltInFiltersMv3(builtInFilters: number[]): Promise<void> {
+        const filtersToLoad: number[] = [];
+
+        builtInFilters.forEach((filterId) => {
+            if (CommonFilterApi.isMv3Supported(filterId)) {
+                filtersToLoad.push(filterId);
+            } else {
+                logger.debug(`[ext.SettingsApi.loadBuiltInFiltersMv3]: MV3 extension does not support filter with id ${filterId}`);
+            }
+        });
+
+        await SettingsApi.loadBuiltInFiltersLocal(filtersToLoad);
+    }
+
+    /**
+     * Imports filters settings from object of {@link FiltersConfig}.
+     */
     private static async importFilters({
         [FiltersOption.EnabledFilters]: enabledFilters,
         [FiltersOption.EnabledGroups]: enabledGroups,
@@ -305,17 +538,48 @@ export class SettingsApi {
         await SettingsApi.importUserFilter(userFilter);
         SettingsApi.importAllowlist(allowlist);
 
-        const tasks = enabledFilters.map(async filterId => {
-            await CommonFilterApi.loadFilterRulesFromBackend(filterId, false);
-            filterStateStorage.enableFilters([filterId]);
+        const filtersToEnable = enabledFilters.filter((filterId: number) => {
+            return CommonFilterUtils.isCommonFilter(filterId);
         });
 
-        await Promise.allSettled(tasks);
+        if (__IS_MV3__) {
+            await SettingsApi.loadBuiltInFiltersMv3(filtersToEnable);
 
-        await CustomFilterApi.createFilters(customFilters as CustomFilterDTO[]);
+            // TODO: revert if Quick Fixes filter is back
+            // await QuickFixesRulesApi.loadAndEnableQuickFixesRules();
+        } else {
+            // special handling for large AdGuard Annoyances filter,
+            // all other deprecated filters shall be skipped;
+            // only for MV2 because it was never available in MV3
+            if (filtersToEnable.includes(AntiBannerFiltersId.AnnoyancesCombinedFilterId)) {
+                filtersToEnable.push(...SEPARATE_ANNOYANCE_FILTER_IDS);
+            }
+
+            await SettingsApi.loadBuiltInFiltersMv2(filtersToEnable);
+        }
+
+        await CustomFilterApi.createFilters(customFilters);
+
         groupStateStorage.enableGroups(enabledGroups);
+
+        logger.info(`[ext.SettingsApi.importFilters]: next groups were enabled: ${enabledGroups}`);
+
+        // Disable groups not listed in the imported list.
+        const allGroups = groupStateStorage.getData();
+        const allGroupsIds = Object.keys(allGroups).map((id) => Number(id));
+
+        const groupIdsToDisable = allGroupsIds
+            .filter((groupId) => !enabledGroups.includes(groupId));
+
+        // Disable all other groups and mark them as untouched.
+        groupStateStorage.disableGroups(groupIdsToDisable, false);
     }
 
+    /**
+     * Exports filters settings to object of {@link FiltersConfig}.
+     *
+     * @returns Object of {@link FiltersConfig}.
+     */
     private static async exportFilters(): Promise<FiltersConfig> {
         return {
             [FiltersOption.EnabledFilters]: filterStateStorage.getEnabledFilters(),
@@ -326,9 +590,12 @@ export class SettingsApi {
         };
     }
 
+    /**
+     * Imports user rules from object of {@link UserFilterConfig}.
+     */
     private static async importUserFilter({
         [UserFilterOption.Enabled]: enabled,
-        [UserFilterOption.Rules]: rules,
+        [UserFilterOption.Rules]: rulesText,
     }: UserFilterConfig): Promise<void> {
         if (typeof enabled === 'boolean') {
             settingsStorage.set(SettingOption.UserFilterEnabled, enabled);
@@ -336,17 +603,25 @@ export class SettingsApi {
             settingsStorage.set(SettingOption.UserFilterEnabled, true);
         }
 
-        await UserRulesApi.setUserRules(rules.split('\n'));
+        await UserRulesApi.setUserRules(rulesText);
     }
 
+    /**
+     * Exports user rules to object of {@link UserFilterConfig}.
+     *
+     * @returns Object of {@link UserFilterConfig}.
+     */
     private static async exportUserFilter(): Promise<UserFilterConfig> {
         return {
             [UserFilterOption.Enabled]: settingsStorage.get(SettingOption.UserFilterEnabled),
-            [UserFilterOption.Rules]: (await UserRulesApi.getUserRules()).join('/n'),
+            [UserFilterOption.Rules]: (await UserRulesApi.getOriginalUserRules()),
             [UserFilterOption.DisabledRules]: '',
         };
     }
 
+    /**
+     * Imports extension allowlist from object of {@link AllowlistConfig}.
+     */
     private static importAllowlist({
         [AllowlistOption.Enabled]: enabled,
         [AllowlistOption.Inverted]: inverted,
@@ -369,6 +644,11 @@ export class SettingsApi {
         AllowlistApi.setInvertedAllowlistDomains(invertedDomains);
     }
 
+    /**
+     * Exports extension allowlist to object of {@link AllowlistConfig}.
+     *
+     * @returns Object of {@link AllowlistConfig}.
+     */
     private static exportAllowlist(): AllowlistConfig {
         return {
             [AllowlistOption.Enabled]: settingsStorage.get(SettingOption.AllowlistEnabled),
@@ -378,6 +658,9 @@ export class SettingsApi {
         };
     }
 
+    /**
+     * Imports Tracking protection (formerly Stealth mode) settings from object of {@link StealthConfig}.
+     */
     private static async importStealth({
         [StealthOption.DisableStealthMode]: disableStealthMode,
         [StealthOption.HideReferrer]: hideReferrer,
@@ -385,16 +668,16 @@ export class SettingsApi {
         [StealthOption.SendDoNotTrack]: sendDoNotTrack,
         [StealthOption.BlockWebRTC]: blockWebRTC,
         [StealthOption.RemoveXClientData]: removeXClientData,
-        [StealthOption.BlockThirdPartyCookies]: blockThirdPartyCookies,
-        [StealthOption.BlockThirdPartyCookiesTime]: blockThirdPartyCookiesTime,
-        [StealthOption.BlockFirstPartyCookies]: blockFirstPartyCookies,
-        [StealthOption.BlockFirstPartyCookiesTime]: blockFirstPartyCookiesTime,
+        [StealthOption.SelfDestructThirdPartyCookies]: selfDestructThirdPartyCookies,
+        [StealthOption.SelfDestructThirdPartyCookiesTime]: selfDestructThirdPartyCookiesTime,
+        [StealthOption.SelfDestructFirstPartyCookies]: selfDestructFirstPartyCookies,
+        [StealthOption.SelfDestructFirstPartyCookiesTime]: selfDestructFirstPartyCookiesTime,
         [StealthOption.BlockKnownTrackers]: blockKnownTrackers,
         [StealthOption.StripTrackingParams]: stripTrackingParam,
     }: StealthConfig): Promise<void> {
         /**
-         * set "block webrtc" setting as soon as possible. AG-9980
-         * don't set the actual value to avoid requesting permissions
+         * Set "block webrtc" setting as soon as possible. AG-9980
+         * don't set the actual value to avoid requesting permissions.
          */
         if (settingsStorage.get(SettingOption.BlockWebRTC) !== blockWebRTC) {
             settingsStorage.set(SettingOption.BlockWebRTC, blockWebRTC);
@@ -404,32 +687,38 @@ export class SettingsApi {
         settingsStorage.set(SettingOption.HideReferrer, hideReferrer);
         settingsStorage.set(SettingOption.HideSearchQueries, hideSearchQueries);
         settingsStorage.set(SettingOption.SendDoNotTrack, sendDoNotTrack);
-        settingsStorage.set(SettingOption.BlockChromeClientData, removeXClientData);
-        settingsStorage.set(SettingOption.SelfDestructThirdPartyCookies, blockThirdPartyCookies);
+        settingsStorage.set(SettingOption.RemoveXClientData, removeXClientData);
 
-        if (blockThirdPartyCookiesTime) {
-            settingsStorage.set(SettingOption.SelfDestructThirdPartyCookiesTime, blockThirdPartyCookiesTime);
+        settingsStorage.set(SettingOption.SelfDestructThirdPartyCookies, selfDestructThirdPartyCookies);
+        if (selfDestructThirdPartyCookiesTime) {
+            settingsStorage.set(SettingOption.SelfDestructThirdPartyCookiesTime, selfDestructThirdPartyCookiesTime);
         }
 
-        settingsStorage.set(SettingOption.SelfDestructFirstPartyCookies, blockFirstPartyCookies);
-
-        if (blockFirstPartyCookiesTime) {
-            settingsStorage.set(SettingOption.SelfDestructFirstPartyCookiesTime, blockFirstPartyCookiesTime);
+        settingsStorage.set(SettingOption.SelfDestructFirstPartyCookies, selfDestructFirstPartyCookies);
+        if (selfDestructFirstPartyCookiesTime) {
+            settingsStorage.set(SettingOption.SelfDestructFirstPartyCookiesTime, selfDestructFirstPartyCookiesTime);
         }
 
         if (stripTrackingParam) {
-            await FiltersApi.loadAndEnableFilters([AntiBannerFiltersId.UrlTrackingFilterId]);
+            const remote = !__IS_MV3__;
+            await FiltersApi.loadAndEnableFilters([AntiBannerFiltersId.UrlTrackingFilterId], remote);
         } else {
             filterStateStorage.disableFilters([AntiBannerFiltersId.UrlTrackingFilterId]);
         }
 
         if (blockKnownTrackers) {
-            await FiltersApi.loadAndEnableFilters([AntiBannerFiltersId.TrackingFilterId]);
+            const remote = !__IS_MV3__;
+            await FiltersApi.loadAndEnableFilters([AntiBannerFiltersId.TrackingFilterId], remote);
         } else {
             filterStateStorage.disableFilters([AntiBannerFiltersId.TrackingFilterId]);
         }
     }
 
+    /**
+     * Exports Tracking protection (formerly Stealth mode) settings to object of {@link StealthConfig}.
+     *
+     * @returns Object of {@link StealthConfig}.
+     */
     private static exportStealth(): StealthConfig {
         return {
             [StealthOption.DisableStealthMode]: settingsStorage.get(SettingOption.DisableStealthMode),
@@ -437,17 +726,17 @@ export class SettingsApi {
             [StealthOption.HideSearchQueries]: settingsStorage.get(SettingOption.HideSearchQueries),
             [StealthOption.SendDoNotTrack]: settingsStorage.get(SettingOption.SendDoNotTrack),
             [StealthOption.BlockWebRTC]: settingsStorage.get(SettingOption.BlockWebRTC),
-            [StealthOption.RemoveXClientData]: settingsStorage.get(SettingOption.BlockChromeClientData),
-            [StealthOption.BlockThirdPartyCookies]: (
+            [StealthOption.RemoveXClientData]: settingsStorage.get(SettingOption.RemoveXClientData),
+            [StealthOption.SelfDestructThirdPartyCookies]: (
                 settingsStorage.get(SettingOption.SelfDestructThirdPartyCookies)
             ),
-            [StealthOption.BlockThirdPartyCookiesTime]: (
+            [StealthOption.SelfDestructThirdPartyCookiesTime]: (
                 settingsStorage.get(SettingOption.SelfDestructThirdPartyCookiesTime)
             ),
-            [StealthOption.BlockFirstPartyCookies]: (
+            [StealthOption.SelfDestructFirstPartyCookies]: (
                 settingsStorage.get(SettingOption.SelfDestructFirstPartyCookies)
             ),
-            [StealthOption.BlockFirstPartyCookiesTime]: (
+            [StealthOption.SelfDestructFirstPartyCookiesTime]: (
                 settingsStorage.get(SettingOption.SelfDestructFirstPartyCookiesTime)
             ),
             [StealthOption.BlockKnownTrackers]: (

@@ -19,31 +19,66 @@ import browser from 'webextension-polyfill';
 
 import {
     SettingOption,
-    Metadata,
-    TagMetadata,
-    RegularFilterMetadata,
-    GroupMetadata,
-    FiltersI18n,
-    GroupsI18n,
-    I18nMetadata,
-    TagsI18n,
+    type Metadata,
+    type RegularFilterMetadata,
+    type GroupMetadata,
+    type TagMetadata,
+    type I18nMetadata,
+    type FiltersI18n,
+    type GroupsI18n,
+    type TagsI18n,
+    type RegularFilterI18nMetadata,
+    type GroupI18nMetadata,
+    type TagI18nMetadata,
 } from '../schema';
 import { StringStorage } from '../utils/string-storage';
 import { I18n } from '../utils/i18n';
+
 import { settingsStorage } from './settings';
 
 /**
  * Class for synchronous control {@link Metadata} storage,
- * that is persisted as string in another key value storage
+ * that is persisted as string in another key value storage.
  *
  * @see {@link StringStorage}
  */
 export class MetadataStorage extends StringStorage<SettingOption.Metadata, Metadata, 'sync'> {
     /**
-     * Gets regular filters metadata
+     * Return version for DNR rulesets.
      *
-     * @returns regular filters metadata
-     * @throws error if metadata is not initialized
+     * @returns Version for DNR rulesets.
+     *
+     * @throws Error if metadata is not initialized.
+     */
+    public getDnrRulesetsVersion(): string | undefined {
+        if (!this.data) {
+            throw MetadataStorage.createNotInitializedError();
+        }
+
+        return this.data.version;
+    }
+
+    /**
+     * Return build timestamp ms for DNR rulesets.
+     *
+     * @returns Build timestamp in milliseconds for DNR rulesets.
+     *
+     * @throws Error if metadata is not initialized.
+     */
+    public getDnrRulesetsBuildTimestampMs(): number | undefined {
+        if (!this.data) {
+            throw MetadataStorage.createNotInitializedError();
+        }
+
+        return this.data.versionTimestampMs;
+    }
+
+    /**
+     * Returns regular filters metadata.
+     *
+     * @returns Regular filters metadata.
+     *
+     * @throws Error if metadata is not initialized.
      */
     public getFilters(): RegularFilterMetadata[] {
         if (!this.data) {
@@ -54,25 +89,28 @@ export class MetadataStorage extends StringStorage<SettingOption.Metadata, Metad
     }
 
     /**
-     * Gets specified regular filter metadata
+     * Returns specified regular filter metadata.
      *
-     * @param filterId - filter id
-     * @returns specified regular filter metadata
-     * @throws error if metadata is not initialized
+     * @param filterId Filter id.
+     *
+     * @returns Specified regular filter metadata.
+     *
+     * @throws Error if metadata is not initialized.
      */
     public getFilter(filterId: number): RegularFilterMetadata | undefined {
         if (!this.data) {
             throw MetadataStorage.createNotInitializedError();
         }
 
-        return this.data.filters.find(el => el.filterId === filterId);
+        return this.data.filters.find((el) => el.filterId === filterId);
     }
 
     /**
-     * Gets groups metadata
+     * Returns groups metadata.
      *
-     * @returns groups metadata
-     * @throws error if metadata is not initialized
+     * @returns Groups metadata.
+     *
+     * @throws Error if metadata is not initialized.
      */
     public getGroups(): GroupMetadata[] {
         if (!this.data) {
@@ -83,41 +121,28 @@ export class MetadataStorage extends StringStorage<SettingOption.Metadata, Metad
     }
 
     /**
-     * Gets specified group metadata
+     * Returns specified group metadata.
      *
-     * @param groupId - group id
-     * @returns specified group metadata
-     * @throws error if metadata is not initialized
+     * @param groupId Group id.
+     *
+     * @returns Specified group metadata.
+     *
+     * @throws Error if metadata is not initialized.
      */
     public getGroup(groupId: number): GroupMetadata | undefined {
         if (!this.data) {
             throw MetadataStorage.createNotInitializedError();
         }
 
-        return this.data.groups.find(el => el.groupId === groupId);
+        return this.data.groups.find((el) => el.groupId === groupId);
     }
 
     /**
-     * Gets specified group metadata by filter id
+     * Returns tags metadata.
      *
-     * @param filterId - filter id
-     * @returns {GroupMetadata | undefined} specified group metadata or undefined
-     */
-    public getGroupByFilterId(filterId: number): GroupMetadata | undefined {
-        const filter = this.getFilter(filterId);
-
-        if (!filter) {
-            return;
-        }
-
-        return this.getGroup(filter.groupId);
-    }
-
-    /**
-     * Gets tags metadata
+     * @returns Tags metadata.
      *
-     * @returns tags metadata
-     * @throws error if metadata is not initialized
+     * @throws Error if metadata is not initialized.
      */
     public getTags(): TagMetadata[] {
         if (!this.data) {
@@ -128,25 +153,28 @@ export class MetadataStorage extends StringStorage<SettingOption.Metadata, Metad
     }
 
     /**
-     * Get specified tag metadata
+     * Returns specified tag metadata.
      *
-     * @param tagId - tag id
-     * @returns specified tag metadata
-     * @throws error if metadata is not initialized
+     * @param tagId Tag id.
+     *
+     * @returns Specified tag metadata.
+     *
+     * @throws Error if metadata is not initialized.
      */
     public getTag(tagId: number): TagMetadata | undefined {
         if (!this.data) {
             throw MetadataStorage.createNotInitializedError();
         }
 
-        return this.data.tags.find(el => el.tagId === tagId);
+        return this.data.tags.find((el) => el.tagId === tagId);
     }
 
     /**
-     * Gets list of filters for the specified languages
+     * Returns list of filters for the specified languages.
      *
-     * @param locale - locale string
-     * @returns list of language specific filters ids
+     * @param locale Locale string.
+     *
+     * @returns List of language specific filters ids.
      */
     public getFilterIdsForLanguage(locale: string): number[] {
         if (!locale) {
@@ -159,12 +187,12 @@ export class MetadataStorage extends StringStorage<SettingOption.Metadata, Metad
     }
 
     /**
-     * Refreshes metadata objects with i18n metadata
+     * Refreshes metadata objects with i18n metadata.
      *
-     * @param metadata - current {@link Metadata}
-     * @param i18nMetadata - {@link I18nMetadata}
+     * @param metadata Current {@link Metadata}.
+     * @param i18nMetadata Applied {@link I18nMetadata}.
      *
-     * @returns updated {@link Metadata}
+     * @returns Updated {@link Metadata}.
      */
     public static applyI18nMetadata(
         metadata: Metadata,
@@ -176,103 +204,149 @@ export class MetadataStorage extends StringStorage<SettingOption.Metadata, Metad
 
         const { tags, groups, filters } = metadata;
 
-        tags.forEach((tag) => MetadataStorage.applyFilterTagLocalization(tag, tagsI18n));
-        filters.forEach((filter) => MetadataStorage.applyFilterLocalization(filter, filtersI18n));
-        groups.forEach((group) => MetadataStorage.applyGroupLocalization(group, groupsI18n));
+        const uiLanguage: string = browser.i18n.getUILanguage();
+
+        tags.forEach((tag) => MetadataStorage.applyFilterTagLocalization(tag, tagsI18n, uiLanguage));
+        filters.forEach((filter) => MetadataStorage.applyFilterLocalization(filter, filtersI18n, uiLanguage));
+        groups.forEach((group) => MetadataStorage.applyGroupLocalization(group, groupsI18n, uiLanguage));
+
+        metadata.locale = uiLanguage;
 
         return metadata;
     }
 
     /**
-     * Localize tag
+     * Localize tag.
      *
-     * @param tag - tag metadata
-     * @param tagsI18n - tag i18n metadata
+     * @param tag Tag metadata.
+     * @param tagsI18n Tag i18n metadata.
+     * @param uiLanguage UI language.
      */
     private static applyFilterTagLocalization(
         tag: TagMetadata,
         tagsI18n: TagsI18n,
+        uiLanguage: string,
     ): void {
         const { tagId } = tag;
-        const localizations = tagsI18n[tagId];
-        if (localizations) {
-            const locale = I18n.find(localizations, browser.i18n.getUILanguage());
+        const rawLocalizations = tagsI18n[tagId];
+        if (!rawLocalizations) {
+            return;
+        }
+        const localizations = MetadataStorage.normalizeLocalization(rawLocalizations);
 
-            if (!locale) {
-                return;
-            }
+        const locale = I18n.find(Object.keys(localizations), uiLanguage);
 
-            const localization = localizations[locale];
+        if (!locale) {
+            return;
+        }
 
-            if (localization) {
-                tag.name = localization.name;
-                tag.description = localization.description;
-            }
+        const localization = localizations[locale];
+
+        if (localization) {
+            tag.name = localization.name;
+            tag.description = localization.description;
         }
     }
 
     /**
-     * Localize filter
+     * Localize filter.
      *
-     * @param filter - regular filter metadata
-     * @param filtersI18n - regular filter i18n metadata
+     * @param filter Regular filter metadata.
+     * @param filtersI18n Regular filter i18n metadata.
+     * @param uiLanguage UI language.
      */
     private static applyFilterLocalization(
         filter: RegularFilterMetadata,
         filtersI18n: FiltersI18n,
+        uiLanguage: string,
     ): void {
         const { filterId } = filter;
-        const localizations = filtersI18n[filterId];
-        if (localizations) {
-            const locale = I18n.find(localizations, browser.i18n.getUILanguage());
+        const rawLocalizations = filtersI18n[filterId];
+        if (!rawLocalizations) {
+            return;
+        }
 
-            if (!locale) {
-                return;
-            }
+        const localizations = MetadataStorage.normalizeLocalization(rawLocalizations);
 
-            const localization = localizations[locale];
+        const locale = I18n.find(Object.keys(localizations), uiLanguage);
 
-            if (localization) {
-                filter.name = localization.name;
-                filter.description = localization.description;
-            }
+        if (!locale) {
+            return;
+        }
+
+        const localization = localizations[locale];
+
+        if (localization) {
+            filter.name = localization.name;
+            filter.description = localization.description;
         }
     }
 
     /**
-     * Localize group
+     * Localize group.
      *
-     * @param group - group metadata
-     * @param groupsI18n - group i18n metadata
+     * @param group Group metadata.
+     * @param groupsI18n Group i18n metadata.
+     * @param uiLanguage UI language.
      */
     private static applyGroupLocalization(
         group: GroupMetadata,
         groupsI18n: GroupsI18n,
+        uiLanguage: string,
     ): void {
         const { groupId } = group;
-        const localizations = groupsI18n[groupId];
-        if (localizations) {
-            const locale = I18n.find(localizations, browser.i18n.getUILanguage());
+        const rawLocalizations = groupsI18n[groupId];
+        if (!rawLocalizations) {
+            return;
+        }
 
-            if (!locale) {
-                return;
-            }
+        const localizations = MetadataStorage.normalizeLocalization(rawLocalizations);
 
-            const localization = localizations[locale];
-            if (localization) {
-                group.groupName = localization.name;
-            }
+        const locale = I18n.find(Object.keys(localizations), uiLanguage);
+
+        if (!locale) {
+            return;
+        }
+
+        const localization = localizations[locale];
+        if (localization) {
+            group.groupName = localization.name;
+            group.groupDescription = localization.description;
         }
     }
 
+    /**
+     * Normalizes localization object.
+     *
+     * @param localization Input localization object.
+     *
+     * @returns Normalized localization object.
+     */
+    private static normalizeLocalization<T extends RegularFilterI18nMetadata | GroupI18nMetadata | TagI18nMetadata>(
+        localization: T,
+    ): T {
+        const normalizedLocalization = {} as T;
+
+        Object.entries(localization).forEach(([key, value]) => {
+            normalizedLocalization[I18n.normalizeLanguageCode(key)] = value;
+        });
+
+        return normalizedLocalization;
+    }
+
+    /**
+     * Helper function to create a basic {@link Error} with a custom message.
+     *
+     * @returns A basic {@link Error} with a custom message.
+     */
     private static createNotInitializedError(): Error {
         return new Error('Metadata is not initialized');
     }
 }
 
 /**
- * {@link MetadataStorage} instance, that stores
+ * {@link MetadataStorage} Instance, that stores
  * stringified {@link Metadata} in {@link settingsStorage} under
- * {@link SettingOption.Metadata} key
+ * {@link SettingOption.Metadata} key.
  */
 export const metadataStorage = new MetadataStorage(SettingOption.Metadata, settingsStorage);

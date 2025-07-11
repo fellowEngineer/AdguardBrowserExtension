@@ -17,55 +17,221 @@
  */
 
 import UAParser from 'ua-parser-js';
+import browser from 'webextension-polyfill';
+
+import { MIN_SUPPORTED_VERSION } from '../../../constants';
 
 /**
- * Helper class for user agent data
+ * Helper class for user agent data.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/API/User-Agent_Client_Hints_API#browser_compatibility
  */
 export class UserAgent {
+    static WINDOWS_10_OS_VERSION = '10';
+
+    static WINDOWS_11_OS_VERSION = '11';
+
+    static PLATFORM_VERSION = 'platformVersion';
+
+    static MIN_WINDOWS_11_PLATFORM_VERSION = 13;
+
+    static ANDROID_OS_NAME = 'android';
+
     static parser = new UAParser(navigator.userAgent);
 
     /**
-     * Gets current browser name
+     * Returns current browser name.
      *
-     * @returns user agent browser name
+     * @returns user agent browser name.
      */
     static getBrowserName(): string | undefined {
-        return this.parser.getBrowser().name;
+        return UserAgent.isFirefoxMobile
+            // Firefox mobile does not have own dedicated browser name
+            ? 'Firefox Mobile'
+            : UserAgent.parser.getBrowser().name;
     }
 
     /**
-     * Check if current browser is as given
+     * Returns current OS name.
      *
-     * @param browserName - Browser Name
-     * @returns true, if current browser has specified name
+     * @returns OS name as string if possible to detect, undefined otherwise.
+     */
+    static getSystemName(): string | undefined {
+        return UserAgent.parser.getOS().name;
+    }
+
+    /**
+     * Returns current OS version.
+     *
+     * @returns OS version as string if possible to detect, undefined otherwise.
+     */
+    static getSystemVersion(): string | undefined {
+        return UserAgent.parser.getOS().version;
+    }
+
+    /**
+     * Returns current platform version.
+     * Uses NavigatorUAData.getHighEntropyValues() to get platform version.
+     *
+     * @returns Actual platform version as string if possible to detect, undefined otherwise.
+     */
+    static async getPlatformVersion(): Promise<string | undefined> {
+        let platformVersion: string | undefined;
+        try {
+            // @ts-ignore
+            const ua = await navigator.userAgentData.getHighEntropyValues([UserAgent.PLATFORM_VERSION]);
+            platformVersion = ua[UserAgent.PLATFORM_VERSION];
+        } catch (e) {
+            // do nothing
+        }
+        return platformVersion;
+    }
+
+    /**
+     * Returns actual Windows version if it is parsed from user agent as Windows 10.
+     *
+     * @see {@link https://learn.microsoft.com/en-us/microsoft-edge/web-platform/how-to-detect-win11#sample-code-for-detecting-windows-11}.
+     *
+     * @returns Actual Windows version.
+     */
+    static async getActualWindowsVersion(version: string): Promise<string> {
+        let actualVersion = version;
+        const platformVersion = await UserAgent.getPlatformVersion();
+
+        if (typeof platformVersion !== 'undefined') {
+            const rawMajorPlatformVersion = platformVersion.split('.')[0];
+            const majorPlatformVersion = rawMajorPlatformVersion && parseInt(rawMajorPlatformVersion, 10);
+
+            if (!majorPlatformVersion
+                || Number.isNaN(majorPlatformVersion)) {
+                return actualVersion;
+            }
+
+            if (majorPlatformVersion >= UserAgent.MIN_WINDOWS_11_PLATFORM_VERSION) {
+                actualVersion = UserAgent.WINDOWS_11_OS_VERSION;
+            }
+        }
+
+        return actualVersion;
+    }
+
+    /**
+     * Returns actual MacOS version if it is possible to detect, otherwise returns passed `version`.
+     *
+     * @param version MacOS version parsed from user agent.
+     *
+     * @returns Actual MacOS version.
+     */
+    static async getActualMacosVersion(version: string): Promise<string> {
+        let actualVersion = version;
+        const platformVersion = await UserAgent.getPlatformVersion();
+
+        if (typeof platformVersion !== 'undefined') {
+            actualVersion = platformVersion;
+        }
+
+        return actualVersion;
+    }
+
+    /**
+     * Returns current system info — OS name and version.
+     *
+     * @returns System info as string if possible to detect, undefined otherwise.
+     */
+    static async getSystemInfo(): Promise<string | undefined> {
+        let systemInfo: string = '';
+        const osName = UserAgent.getSystemName();
+        let osVersion = UserAgent.getSystemVersion();
+
+        if (typeof osName !== 'undefined') {
+            systemInfo += osName;
+        }
+
+        if (typeof osVersion !== 'undefined') {
+            // windows 11 is parsed as windows 10 from user agent
+            if (UserAgent.isWindows && osVersion === UserAgent.WINDOWS_10_OS_VERSION) {
+                osVersion = await UserAgent.getActualWindowsVersion(osVersion);
+            } else if (UserAgent.isMacOs) {
+                // mac os version can be parsed from user agent as 10.15.7
+                // so it also might be more specific version like 13.5.2
+                osVersion = await UserAgent.getActualMacosVersion(osVersion);
+            }
+            systemInfo += ` ${osVersion}`;
+        }
+
+        if (systemInfo.length === 0) {
+            return undefined;
+        }
+
+        return systemInfo;
+    }
+
+    /**
+     * Check if the current platform is Android.
+     * This method is more accurate than using UserAgent string,
+     * because it uses the browser API to get the platform info.
+     *
+     * @returns True if the current platform is Android.
+     */
+    static async getIsAndroid(): Promise<boolean> {
+        try {
+            const { os } = await browser.runtime.getPlatformInfo();
+            return os === UserAgent.ANDROID_OS_NAME;
+        } catch {
+            // If runtime.getPlatformInfo() is not supported, we fallback to the UserAgent string.
+            return UserAgent.isAndroid;
+        }
+    }
+
+    /**
+     * Check if the current browser is as given.
+     *
+     * @param browserName Browser Name.
+     *
+     * @returns true, if current browser has specified name.
      */
     static isTargetBrowser(browserName: string): boolean {
-        return this.parser.getBrowser().name === browserName;
+        return UserAgent.parser.getBrowser().name === browserName;
     }
 
     /**
-     * Check if current platform is as given
+     * Check if current platform is as given.
      *
-     * @param platformName - Platform name
-     * @returns true, if current browser has specified name
+     * @param platformName Platform name.
+     *
+     * @returns true, if current browser has specified name.
      */
     static isTargetPlatform(platformName: string): boolean {
-        return this.parser.getOS().name === platformName;
+        return UserAgent.getSystemName() === platformName;
     }
 
     /**
-     * Get browser version by name
+     * Check if current engine is as given.
      *
-     * @param browserName - Browser Name
-     * @returns browser version number or undefined
+     * @param engineName Engine name.
+     *
+     * @returns true, if current engine has specified name.
      */
-    static getBrowserVersion(browserName: string): number | undefined {
-        const browser = this.parser.getBrowser();
-
-        return browser.name === browserName ? Number(browser.version) : undefined;
+    static isTargetEngine(engineName: string): boolean {
+        return UserAgent.parser.getEngine().name === engineName;
     }
+
+    static isTargetDeviceType(deviceType: string): boolean {
+        return UserAgent.parser.getDevice().type === deviceType;
+    }
+
+    /**
+     * Returns a major browser version.
+     *
+     * @returns browser version number or undefined.
+     */
+    static getVersion(): number | undefined {
+        const browser = this.parser.getBrowser();
+        const versionNumber = Number(browser.version?.split('.')[0]);
+        return Number.isNaN(versionNumber) ? undefined : versionNumber;
+    }
+
+    static version = UserAgent.getVersion();
 
     static isChrome = UserAgent.isTargetBrowser('Chrome');
 
@@ -77,13 +243,7 @@ export class UserAgent {
 
     static isEdge = UserAgent.isTargetBrowser('Edge');
 
-    static isEdgeChromium = Number(UserAgent.getBrowserVersion('Edge')) >= 79;
-
-    static chromeVersion = UserAgent.getBrowserVersion('Chrome');
-
-    static firefoxVersion = UserAgent.getBrowserVersion('Firefox');
-
-    static operaVersion = UserAgent.getBrowserVersion('Opera');
+    static isEdgeChromium = UserAgent.isEdge && !!(UserAgent.version && UserAgent.version >= 79);
 
     static isMacOs = UserAgent.isTargetPlatform('Mac OS');
 
@@ -91,10 +251,19 @@ export class UserAgent {
 
     static isAndroid = UserAgent.isTargetPlatform('Android');
 
-    static isSupportedBrowser =
-        (UserAgent.isChrome && Number(UserAgent.chromeVersion) >= 79)
-        || (UserAgent.isFirefox && Number(UserAgent.firefoxVersion) >= 78)
-        || (UserAgent.isOpera && Number(UserAgent.operaVersion) >= 66);
+    static isChromium = UserAgent.isTargetEngine('Blink');
+
+    static isMobileDevice = UserAgent.isTargetDeviceType('mobile');
+
+    static isFirefoxMobile = UserAgent.isFirefox && UserAgent.isMobileDevice;
+
+    static isOculus = UserAgent.isTargetBrowser('Oculus Browser');
+
+    static isSupportedBrowser = (UserAgent.isChrome && Number(UserAgent.version) >= MIN_SUPPORTED_VERSION.CHROMIUM_MV2)
+        || (UserAgent.isEdgeChromium && Number(UserAgent.version) >= MIN_SUPPORTED_VERSION.EDGE_CHROMIUM)
+        || (UserAgent.isFirefox && Number(UserAgent.version) >= MIN_SUPPORTED_VERSION.FIREFOX)
+        || (UserAgent.isFirefoxMobile && Number(UserAgent.version) >= MIN_SUPPORTED_VERSION.FIREFOX_MOBILE)
+        || (UserAgent.isOpera && Number(UserAgent.version) >= MIN_SUPPORTED_VERSION.OPERA);
 
     static browserName = UserAgent.getBrowserName();
 }

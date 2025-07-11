@@ -25,22 +25,25 @@ import React, {
     forwardRef,
 } from 'react';
 import { observer } from 'mobx-react';
-import cn from 'classnames';
 import { FixedSizeList } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import throttle from 'lodash/throttle';
+
+import { throttle } from 'lodash-es';
+import cn from 'classnames';
 
 import { rootStore } from '../../stores/RootStore';
 import { getRequestEventType } from '../RequestWizard/utils';
+import { translator } from '../../../../common/translators/translator';
 import { reactTranslator } from '../../../../common/translators/reactTranslator';
 import { AntiBannerFiltersId, SCROLLBAR_WIDTH } from '../../../../common/constants';
-import { FilteringEventsEmpty } from './FilteringEventsEmpty';
-import { optionsStorage } from '../../../options/options-storage';
 import { passiveEventSupported } from '../../../helpers';
+import { optionsStorage } from '../../../options/options-storage';
+import { StatusMode, getStatusMode } from '../../filteringLogStatus';
+import { Status } from '../Status';
+
+import { FilteringEventsEmpty } from './FilteringEventsEmpty';
 
 import './filtering-events.pcss';
-import { Status } from '../Status';
-import { StatusMode, getStatusMode } from '../../filteringLogStatus';
 
 const ITEM_HEIGHT_PX = 30;
 
@@ -67,18 +70,21 @@ const filterNameAccessor = (props) => {
  * @property {string} YELLOW
  * @property {string} RED
  * @property {string} GREEN
+ * @property {string} LIGHT_GREEN
  */
 const RowClassName = {
     YELLOW: 'yellow',
     RED: 'red',
     GREEN: 'green',
+    LIGHT_GREEN: 'light-green',
 };
 
 const rowClassNameMap = {
     [StatusMode.REGULAR]: null,
     [StatusMode.MODIFIED]: RowClassName.YELLOW,
     [StatusMode.BLOCKED]: RowClassName.RED,
-    [StatusMode.ALLOWED]: RowClassName.GREEN,
+    [StatusMode.ALLOWED]: RowClassName.LIGHT_GREEN,
+    [StatusMode.ALLOWED_STEALTH]: RowClassName.GREEN,
 };
 
 const getRowClassName = (event) => {
@@ -117,23 +123,87 @@ const ruleAccessor = (props) => {
     const {
         requestRule,
         replaceRules,
+        stealthAllowlistRules,
+        declarativeRuleInfo,
     } = props;
 
     let ruleText = '';
     if (requestRule) {
         if (requestRule.filterId === AntiBannerFiltersId.AllowlistFilterId) {
-            ruleText = reactTranslator.getMessage('filtering_log_in_allowlist');
+            ruleText = translator.getMessage('filtering_log_in_allowlist');
         } else {
-            ruleText = requestRule.ruleText;
+            ruleText = requestRule.appliedRuleText;
         }
     }
 
     if (replaceRules) {
         const rulesCount = replaceRules.length;
-        ruleText = `${reactTranslator.getMessage('filtering_log_modified_rules')} ${rulesCount}`;
+        ruleText = `${translator.getMessage('filtering_log_modified_rules', {
+            rules_count: rulesCount,
+        })}`;
     }
 
-    return ruleText;
+    if (stealthAllowlistRules && stealthAllowlistRules.length > 0) {
+        const rulesCount = stealthAllowlistRules.length;
+        if (rulesCount === 1) {
+            return stealthAllowlistRules[0].appliedRuleText;
+        }
+
+        ruleText = translator.getMessage('filtering_log_stealth_rules', { rules_count: rulesCount });
+    }
+
+    // If this is a cosmetic rule - we should not check declarative source rules,
+    // because they works only with network part.
+    const isCosmeticRule = requestRule?.cssRule || requestRule?.scriptRule;
+    if (isCosmeticRule) {
+        return ruleText;
+    }
+
+    // If we have exact matched rule - show it.
+    if (declarativeRuleInfo?.sourceRules.length > 0) {
+        // But for allowlisted sited we do not needed to show source rule,
+        // only show "this site is allowlisted".
+        if (declarativeRuleInfo.sourceRules[0].filterId === AntiBannerFiltersId.AllowlistFilterId) {
+            return translator.getMessage('filtering_log_in_allowlist');
+        }
+
+        const exactMatchedRules = declarativeRuleInfo.sourceRules
+            .map(({ sourceRule }) => sourceRule)
+            .join('; ');
+        if (!ruleText) {
+            return exactMatchedRules;
+        }
+
+        const { sourceRules } = declarativeRuleInfo;
+
+        // Note: source rules contains text from already preprocessed rules,
+        // that's why we checked appliedRuleText, but not originalRuleText.
+        const matchedRulesContainsAssumed = sourceRules.some(({ sourceRule }) => sourceRule === ruleText);
+
+        // If exactly matched rules do not contain assumed rule - we render
+        // attention mark for this request.
+        const attention = !matchedRulesContainsAssumed && (
+            <span>❗</span>
+        );
+
+        return (
+            <>
+                {attention}
+                {exactMatchedRules}
+            </>
+        );
+    }
+
+    // Otherwise show assumed (for MV3, but for MV2 it will be exact) rule,
+    // if found any.
+    const isAssumedRule = __IS_MV3__ && ruleText && !isCosmeticRule;
+
+    return (
+        <>
+            {isAssumedRule && <span className="red-dot">*</span>}
+            {ruleText}
+        </>
+    );
 };
 
 const statusAccessor = (props) => {
@@ -143,6 +213,7 @@ const statusAccessor = (props) => {
 };
 
 const Row = observer(({
+    index,
     event,
     columns,
     onClick,
@@ -157,15 +228,20 @@ const Row = observer(({
     );
 
     return (
-        <button
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
+        <div
+            role="row"
             style={{
                 ...style,
                 top: `${parseFloat(style.top) + ITEM_HEIGHT_PX}px`,
             }}
             id={event.eventId}
             onClick={onClick}
-            type="button"
             className={className}
+            // Set row index explicitly for screen readers, because table
+            // is virtualized and not all of the rows are rendered at the same time.
+            // Add 2 to index to include the header row and make it 1-based index.
+            aria-rowindex={index + 2}
         >
             {
                 columns.map((column) => {
@@ -179,6 +255,7 @@ const Row = observer(({
 
                     return (
                         <div
+                            role="cell"
                             className="td"
                             key={column.id}
                             style={{ width: column.getWidth() }}
@@ -188,7 +265,14 @@ const Row = observer(({
                     );
                 })
             }
-        </button>
+            {/* This cell is available only for screen readers to notify
+                users that they can open details of this log with keyboard. */}
+            <div role="cell" className="sr-only">
+                <button type="button" onClick={onClick}>
+                    {translator.getMessage('filtering_table_open_details')}
+                </button>
+            </div>
+        </div>
     );
 });
 
@@ -202,6 +286,7 @@ const VirtualizedRow = ({
 
     return (
         <Row
+            index={index}
             event={event}
             columns={columns}
             onClick={handleRowClick}
@@ -215,24 +300,36 @@ const ColumnsContext = React.createContext({});
 const ColumnsProvider = ColumnsContext.Provider;
 
 const TableHeader = ({ style }) => {
-    const { columns } = useContext(ColumnsContext);
+    const { columns, isLogEventsEmpty } = useContext(ColumnsContext);
 
+    /**
+     * WAI ARIA attributes are hidden if the table is empty, this needed
+     * to properly announce FilteringEventsEmpty component, otherwise
+     * screen readers will ignore this block.
+     */
     return (
         <div
+            role="row"
             className="thead"
             style={style}
+            aria-hidden={isLogEventsEmpty}
+            // Set row index explicitly for screen readers, because table
+            // is virtualized and not all of the rows are rendered at the same time.
+            // Header row is always first row in the table (1-based index).
+            aria-rowindex={isLogEventsEmpty ? undefined : 1}
         >
             <div className="tr">
                 {
                     columns.map((column) => (
                         <div
+                            role="columnheader"
                             className="th"
                             key={column.id}
                             style={{ width: column.getWidth() }}
                         >
                             {column.Header}
                             <div
-                                role="separator"
+                                aria-hidden="true"
                                 className="resizer"
                                 key={column.id}
                                 style={{ cursor: 'col-resize' }}
@@ -241,6 +338,11 @@ const TableHeader = ({ style }) => {
                         </div>
                     ))
                 }
+                {/* This column is available only for screen readers to notify
+                    users that they can open details of this log with keyboard. */}
+                <div role="columnheader" className="sr-only">
+                    {translator.getMessage('filtering_table_action')}
+                </div>
             </div>
         </div>
     );
@@ -268,15 +370,16 @@ const FilteringEventsRows = observer(({
     handleRowClick,
 }) => {
     const { events } = logStore;
+    const isLogEventsEmpty = logStore.events.length === 0;
 
     return (
         /**
-         * FixedSizeList does not support passing props to innerElementType component
-         * We use React Context API to bypass this limatation
+         * FixedSizeList does not support passing props to innerElementType component.
+         * We use React Context API to bypass this limitation.
          *
-         * https://github.com/bvaughn/react-window/issues/404
+         * @see {@link https://github.com/bvaughn/react-window/issues/404}
          */
-        <ColumnsProvider value={{ columns }}>
+        <ColumnsProvider value={{ columns, isLogEventsEmpty }}>
             <AutoSizer>
                 {({
                     height,
@@ -308,6 +411,8 @@ const MIN_COLUMN_WIDTH = 50;
 
 const FilteringEvents = observer(() => {
     const { logStore } = useContext(rootStore);
+
+    const isLogEventsEmpty = logStore.events.length === 0;
 
     const tableRef = useRef(null);
 
@@ -501,8 +606,21 @@ const FilteringEvents = observer(() => {
 
     const columns = addMethods(columnsData);
 
+    /**
+     * WAI ARIA attributes are hidden if the table is empty, this needed
+     * to properly announce FilteringEventsEmpty component, otherwise
+     * screen readers will ignore this block.
+     */
     return (
-        <div className="filtering-log">
+        <div
+            role={isLogEventsEmpty ? undefined : 'table'}
+            className="filtering-log"
+            aria-label={isLogEventsEmpty ? undefined : translator.getMessage('filtering_log_title')}
+            // Set number of rows explicitly for screen readers, because table
+            // is virtualized and not all of the rows are rendered at the same time.
+            // Add 1 to the number of rows to include the header row.
+            aria-rowcount={isLogEventsEmpty ? undefined : logStore.events.length + 1}
+        >
             <div
                 style={{ minWidth: `${minTableWidth}px` }}
                 className="table filtering-log__inner"

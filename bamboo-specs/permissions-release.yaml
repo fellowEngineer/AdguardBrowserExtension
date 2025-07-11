@@ -15,7 +15,13 @@ environment-permissions:
         permissions:
           - view
           - deploy
-  - Chrome WebStore:
+  - Chrome WebStore MV2:
+      - groups:
+          - extensions-developers
+        permissions:
+          - view
+          - deploy
+  - Chrome WebStore MV3:
       - groups:
           - extensions-developers
         permissions:
@@ -28,6 +34,12 @@ environment-permissions:
           - view
           - deploy
   - Edge Addons:
+      - groups:
+          - extensions-developers
+        permissions:
+          - view
+          - deploy
+  - GitHub:
       - groups:
           - extensions-developers
         permissions:

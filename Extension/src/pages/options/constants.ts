@@ -72,6 +72,11 @@ export const HOW_TO_CREATE_RULES_URL = Forward.get({
     from: ForwardFrom.Options,
 });
 
+export const FILTER_POLICY_URL = Forward.get({
+    action: ForwardAction.FilterPolicy,
+    from: ForwardFrom.Options,
+});
+
 export const ACCEPTABLE_ADS_LEARN_MORE_URL = Forward.get({
     action: ForwardAction.SelfPromotion,
     from: ForwardFrom.Options,
@@ -82,7 +87,27 @@ export const SAFEBROWSING_LEARN_MORE_URL = Forward.get({
     from: ForwardFrom.Options,
 });
 
+export const BUG_REPORT_URL = Forward.get({
+    action: ForwardAction.BugReport,
+    from: ForwardFrom.Options,
+});
+
+export const BUG_REPORT_MV3_URL = Forward.get({
+    action: ForwardAction.BugReportMv3,
+    from: ForwardFrom.Options,
+});
+
+export const FILTERING_LOG_ASSUMED_RULE_URL = Forward.get({
+    action: ForwardAction.FilteringLogAssumedRule,
+    from: ForwardFrom.FilteringLog,
+});
+
 export const COLLECT_HITS_LEARN_MORE_URL = Forward.get({
     action: ForwardAction.CollectHitsLearnMore,
+    from: ForwardFrom.Options,
+});
+
+export const DEVELOPER_MODE_REQUIRED_URL = Forward.get({
+    action: ForwardAction.DeveloperModeRequired,
     from: ForwardFrom.Options,
 });

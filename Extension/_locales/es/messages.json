@@ -14,17 +14,38 @@
     "options_filters_empty_title": {
         "message": "No se ha encontrado nada"
     },
+    "options_filters_of_group": {
+        "message": "Filtros del grupo \"%groupName%\""
+    },
     "options_antibanner_custom_filter_already_exists": {
         "message": "Este filtro personalizado ya ha sido añadido"
     },
+    "options_filters_annoyances_consent_title": {
+        "message": "Por favor, lee atentamente antes de habilitar los filtros de elementos molestos"
+    },
+    "options_filters_annoyances_consent_description": {
+        "message": "Estás a punto de habilitar uno o más filtros de elementos molestos. Bloquean elementos no relacionados con el contenido del sitio web o relacionados pero molestos para tu experiencia de usuario. Los propietarios de los sitios web pueden considerar estos elementos obligatorios: si los bloqueas, puedes estar infringiendo sus condiciones; es posible que algunas funciones de los sitios web no estén disponibles o no funcionen correctamente. Entiendes y aceptas que es el único responsable de cumplir con los términos de uso de los sitios web que visitas y que AdGuard no es responsable de que cumplas con los términos de uso de los sitios web que visitas."
+    },
+    "options_filters_annoyances_consent_question": {
+        "message": "¿Habilitar estos filtros?"
+    },
+    "options_filters_annoyances_consent_filter_policy": {
+        "message": "Para obtener detalles sobre lo que bloquean los filtros de elementos molestos de AdGuard, consulta la <a>política de filtros<\/a>."
+    },
+    "options_filters_annoyances_consent_enable_button": {
+        "message": "Habilitar"
+    },
     "popup_header_cta_link": {
-        "message": "¿Quieres bloquear más?"
+        "message": "Cómo mejorar la protección"
     },
     "popup_header_update_filters": {
         "message": "Buscar actualizaciones de los filtros"
     },
     "options_popup_import_settings_wrong_file_ext": {
         "message": "La extensión del archivo debe ser %extension%"
+    },
+    "popup_resume_protection_button": {
+        "message": "Reanudar"
     },
     "popup_adguard_for_ios": {
         "message": "AdGuard para iOS"
@@ -41,11 +62,17 @@
     "options_filters_filter_updated": {
         "message": "actualizado:"
     },
+    "options_filters_filter_tags": {
+        "message": "Tags de filtro"
+    },
+    "options_filters_back_button": {
+        "message": "Regresar"
+    },
     "options_popup_version_update_disable_notification": {
         "message": "Deshabilitar notificaciones"
     },
     "popup_adguard_footer_title": {
-        "message": "Obtén AdGuard para tu móvil"
+        "message": "Protege tu dispositivo móvil"
     },
     "options_popup_call_to_action": {
         "message": "Ingresa una URL válida o la ruta del archivo de filtro en la casilla de arriba."
@@ -70,6 +97,30 @@
     },
     "options_popup_check_false_description": {
         "message": "Error al añadir tu filtro personalizado."
+    },
+    "options_add_custom_filter_modal_title": {
+        "message": "Añadir personalizado"
+    },
+    "options_add_custom_filter_modal_checking_filter": {
+        "message": "Revisando tu filtro..."
+    },
+    "options_add_custom_filter_modal_error_title": {
+        "message": "No se pudo agregar el filtro personalizado"
+    },
+    "options_add_custom_filter_modal_error_subtitle": {
+        "message": "Por favor, inténtalo de nuevo o contacta con el soporte"
+    },
+    "options_add_custom_filter_modal_add_button": {
+        "message": "Añadir"
+    },
+    "options_add_custom_filter_modal_filter_name": {
+        "message": "Nombre del filtro:"
+    },
+    "options_add_custom_filter_modal_filter_trusted": {
+        "message": "Confiable"
+    },
+    "options_add_custom_filter_modal_filter_trusted_description": {
+        "message": "Los filtros de confianza pueden utilizar potentes modificadores de reglas: asegúrate de utilizar un filtro de desarrolladores de confianza"
     },
     "options_popup_try_again_button": {
         "message": "Volver a intentar"
@@ -99,7 +150,8 @@
         "message": "AdGuard AdBlocker"
     },
     "description": {
-        "message": "Inigualable extensión para bloqueo de anuncios y ventanas emergentes. Bloquea anuncios en Facebook, YouTube y los demás sitios web."
+        "message": "Inigualable extensión para bloqueo de anuncios y ventanas emergentes. Bloquea anuncios en Facebook, YouTube y los demás sitios web.",
+        "description": "TEXT MAX LENGTH: 132"
     },
     "background_tab_title": {
         "message": "Pestaña en segundo plano"
@@ -108,31 +160,37 @@
         "message": "Lista de permitido"
     },
     "options_allowlist_desc": {
-        "message": "AdGuard no filtra sitios web de la lista de permitido."
+        "message": "AdGuard no filtra sitios web de la lista de permitido"
     },
     "options_allowlist_invert": {
         "message": "Invertir lista de permitido"
     },
     "options_allowlist_invert_desc": {
-        "message": "Desbloquea anuncios en todas partes excepto en esta lista."
+        "message": "Desbloquea anuncios en todas partes excepto en la lista de permitido"
     },
     "options_allowlist_alert_invert": {
         "message": "La lista de permitido está invertida. Los anuncios se bloquean solo en los sitios web que se le añaden. <a>Deshabilitar<\/a>"
+    },
+    "options_allowlist_leave_subtitle": {
+        "message": "Se perderán tus cambios en la lista de permitido"
     },
     "options_userfilter": {
         "message": "Reglas del usuario"
     },
     "filtering_log_modified_rules": {
-        "message": "Reglas modificadas:"
+        "message": "Reglas modificadas: %rules_count%"
+    },
+    "filtering_log_stealth_rules": {
+        "message": "Reglas de protección contra rastreo: %rules_count%"
     },
     "filtering_log_privacy_applied_rules": {
-        "message": "Modo sigiloso aplicado"
+        "message": "Protección contra rastreo aplicada"
     },
     "filtering_log_in_allowlist": {
         "message": "El sitio está permitido"
     },
     "filtering_log_hide_referrer": {
-        "message": "Referrer oculto a terceros"
+        "message": "Referer oculto a terceros"
     },
     "filtering_log_hide_search_queries": {
         "message": "Tus consultas de búsqueda ocultas"
@@ -173,6 +231,12 @@
     "options_antibanner_custom_group": {
         "message": "Personalizado"
     },
+    "options_antibanner_custom_group_description": {
+        "message": "Permite usar filtros de terceros con AdGuard"
+    },
+    "options_filters_enabled_per_group": {
+        "message": "Activado: %current% de %total%"
+    },
     "options_filters_enabled": {
         "message": "Habilitado:"
     },
@@ -188,11 +252,17 @@
     "options_filters_filter_trusted_tag_desc": {
         "message": "Elegiste confiar en este filtro."
     },
+    "options_filters_info_mv3_total_rules": {
+        "message": "Reglas totales: %num%"
+    },
     "options_add_custom_filter": {
         "message": "Añadir filtro personalizado"
     },
     "options_empty_custom_filter": {
         "message": "Todavía no tienes filtros personalizados"
+    },
+    "options_loader_applying_changes": {
+        "message": "Aplicando cambios..."
     },
     "options_editor_indicator_saving": {
         "message": "Guardando..."
@@ -200,8 +270,11 @@
     "options_editor_indicator_saved": {
         "message": "Guardado"
     },
+    "options_popup_import_error_required_privacy_permission": {
+        "message": "Para importar este archivo de configuración, permite que AdGuard cambie tu configuración relacionada con la privacidad."
+    },
     "options_popup_import_success_title": {
-        "message": "Configuración importada correctamente"
+        "message": "Configuración importada"
     },
     "options_popup_import_error_title": {
         "message": "Error al importar la configuración"
@@ -215,32 +288,71 @@
     "options_popup_trusted_filter_description": {
         "message": "Los filtros de confianza pueden utilizar potentes modificadores de reglas de filtrado que pueden ser peligrosos en las manos equivocadas. No marques esta casilla a menos que confíes plenamente en ella."
     },
-    "popup_site_filtering_state": {
-        "message": "Protección en este sitio web"
-    },
     "popup_site_filtering_state_secure_page": {
         "message": "Página segura"
+    },
+    "popup_site_filtering_state_loading": {
+        "message": "Procesando..."
+    },
+    "popup_site_filtering_state_enabling": {
+        "message": "Habilitando protección..."
     },
     "popup_site_filtering_state_enabled": {
         "message": "Protección habilitada"
     },
+    "popup_site_filtering_state_disabling": {
+        "message": "Deshabilitando protección..."
+    },
     "popup_site_filtering_state_disabled": {
         "message": "Protección deshabilitada"
+    },
+    "popup_site_filtering_state_pausing": {
+        "message": "Pausando protección..."
     },
     "popup_site_filtering_state_paused": {
         "message": "Protección pausada"
     },
+    "popup_site_filtering_state_resuming": {
+        "message": "Reanudando protección..."
+    },
+    "popup_site_filtering_state_subtitle_all_websites": {
+        "message": "para todos los sitios web"
+    },
     "popup_site_exception_information": {
         "message": "El filtrado está deshabilitado porque puede interferir con el funcionamiento de este sitio web."
+    },
+    "popup_tab_current_website": {
+        "message": "Sitio web actual"
     },
     "popup_tab_blocked_count": {
         "message": "Bloqueado: %num%"
     },
     "popup_tab_blocked_all_count": {
-        "message": "Total: %num%"
+        "message": "Total bloqueado: %num%"
     },
     "popup_statistics_total": {
         "message": "Total"
+    },
+    "popup_statistics_category_label": {
+        "message": "Categoría de estadísticas"
+    },
+    "popup_statistics_all_categories": {
+        "message": "Todo"
+    },
+    "popup_statistics_category_advertising": {
+        "message": "Anuncio"
+    },
+    "popup_statistics_category_trackers": {
+        "message": "Rastreadores"
+    },
+    "popup_statistics_category_social_media": {
+        "message": "Redes sociales"
+    },
+    "popup_statistics_category_cdn": {
+        "message": "CDN"
+    },
+    "popup_statistics_category_other": {
+        "message": "Otros"
     },
     "popup_statistics_week_days_mon": {
         "message": "Lun."
@@ -299,6 +411,9 @@
     "popup_statistics_months_dec": {
         "message": "Dic."
     },
+    "options_popup_updating_filters": {
+        "message": "Actualizando filtros..."
+    },
     "options_popup_update_title_error": {
         "message": "Error al actualizar los filtros"
     },
@@ -333,46 +448,31 @@
         "message": "MÁS INFORMACIÓN"
     },
     "popup_block_site_ads_option": {
-        "message": "Bloquear anuncios en este sitio web"
+        "message": "Bloquear anuncios manualmente"
     },
     "popup_security_report": {
         "message": "Verificar seguridad del sitio web"
     },
-    "popup_reset_custom_rules": {
-        "message": "Eliminar todas las reglas del usuario para esta página"
+    "popup_reset_page_user_rules": {
+        "message": "Eliminar reglas del usuario para este sitio web"
     },
     "popup_open_settings": {
-        "message": "Configuración de AdGuard"
+        "message": "Abrir la configuración de AdGuard"
     },
-    "popup_block_site_ads_android": {
-        "message": "Bloquear anuncios en un sitio web"
-    },
-    "popup_security_report_android": {
-        "message": "Reporte de seguridad"
-    },
-    "popup_in_allowlist_android": {
-        "message": "En la lista de permitido"
-    },
-    "popup_site_protection_disabled_android": {
-        "message": "Protección pausada"
-    },
-    "popup_open_log_android": {
-        "message": "Registro de filtrado"
+    "popup_protection_button": {
+        "message": "Protección de AdGuard"
     },
     "context_block_site_ads": {
-        "message": "Bloquear anuncios en este sitio web..."
-    },
-    "context_block_site_element": {
-        "message": "Bloquear un elemento..."
+        "message": "Bloquear anuncios manualmente"
     },
     "context_security_report": {
-        "message": "Verificar seguridad del sitio web..."
+        "message": "Verificar seguridad del sitio web"
     },
     "context_complaint_website": {
-        "message": "Informar de un problema..."
+        "message": "Reportar un error"
     },
     "context_site_filtering_disabled": {
-        "message": "AdGuard no puede funcionar en este dominio"
+        "message": "AdGuard no puede filtrar esta página"
     },
     "context_disable_protection": {
         "message": "Pausar protección de AdGuard"
@@ -384,10 +484,10 @@
         "message": "La protección de AdGuard está pausada"
     },
     "context_open_settings": {
-        "message": "Configuración de AdGuard..."
+        "message": "Configuración de AdGuard"
     },
     "context_open_log": {
-        "message": "Registro de filtrado..."
+        "message": "Registro de filtrado"
     },
     "context_site_exception": {
         "message": "Este sitio web está en las excepciones"
@@ -413,6 +513,9 @@
     "filters_download_loading": {
         "message": "Por favor, espera mientras la base de datos de los filtros se carga..."
     },
+    "post_install_loading": {
+        "message": "Cargando extensión..."
+    },
     "filtering_modal_element": {
         "message": "Elemento:"
     },
@@ -432,10 +535,10 @@
         "message": "Buscar en pestañas"
     },
     "filtering_log_preserve_log_off": {
-        "message": "Conservar registro: Apagado"
+        "message": "No grabar registro"
     },
     "filtering_log_preserve_log_on": {
-        "message": "Conservar registro: Encendido"
+        "message": "Grabar registro"
     },
     "filtering_refresh_tab_short": {
         "message": "Actualizar"
@@ -464,8 +567,14 @@
     "filtering_table_filter": {
         "message": "Filtro"
     },
+    "filtering_table_action": {
+        "message": "Acción"
+    },
+    "filtering_table_open_details": {
+        "message": "Abrir detalles"
+    },
     "filtering_table_empty_reload_page_desc": {
-        "message": "<reset>Deshabilita los filtros<\/reset> o <refresh>recarga la página<\/refresh> para ver los eventos filtrados."
+        "message": "No se encontró nada. <reset>Deshabilita filtros<\/reset> o <refresh>recarga la página<\/refresh> para ver los registros."
     },
     "filtering_modal_info_title": {
         "message": "Detalles de la petición"
@@ -486,7 +595,7 @@
         "message": "Reglas:"
     },
     "filtering_modal_privacy": {
-        "message": "Modo sigiloso:"
+        "message": "Protección de seguimiento:"
     },
     "filtering_modal_filter": {
         "message": "Filtro:"
@@ -516,7 +625,7 @@
         "message": "Estado:"
     },
     "filtering_modal_status_text_error": {
-        "message": "No se recibió respuesta"
+        "message": "No se pudo cargar la vista previa. Inténtalo nuevamente"
     },
     "filtering_modal_status_text_loading": {
         "message": "Cargando..."
@@ -534,7 +643,7 @@
         "message": "Opciones:"
     },
     "filtering_modal_apply_domains": {
-        "message": "Aplicar la regla a todos los sitios web"
+        "message": "Aplicar regla a todos los sitios web"
     },
     "filtering_modal_third_party": {
         "message": "Solo aplicar a peticiones de terceros"
@@ -605,6 +714,12 @@
     "filtering_log_status_modified": {
         "message": "Modificado"
     },
+    "options_skip_to_main_content": {
+        "message": "Saltar al contenido principal"
+    },
+    "options_navigation": {
+        "message": "Navegación"
+    },
     "options_settings": {
         "message": "Configuración de AdGuard"
     },
@@ -615,7 +730,7 @@
         "message": "Bloquear anuncios de búsqueda y autopromoción de sitios web"
     },
     "options_block_acceptable_ads_desc": {
-        "message": "Deshazte de los <a>anuncios basados en contexto y autopromoción de sitios web<\/a> que aparecen en los resultados de búsqueda."
+        "message": "Elimina los anuncios autopromocionales de los sitios web y los anuncios contextuales de los resultados de búsqueda. <a>Más información<\/a>"
     },
     "options_show_blocked_ads_count_title": {
         "message": "Mostrar el número de anuncios bloqueados en el icono de la extensión AdGuard"
@@ -624,7 +739,7 @@
         "message": "Habilitar automáticamente los filtros más adecuados"
     },
     "options_enable_autodetect_filter_desc": {
-        "message": "Los filtros específicos de idioma se habilitarán según el idioma del sitio."
+        "message": "Se habilitarán filtros específicos de idioma en función del idioma del sitio"
     },
     "options_select_theme": {
         "message": "Tema"
@@ -651,7 +766,7 @@
         "message": "Dejar comentario"
     },
     "options_privacy": {
-        "message": "Modo sigiloso"
+        "message": "Protección contra rastreo"
     },
     "options_update_antibanner_filters": {
         "message": "Buscar actualizaciones de los filtros"
@@ -666,7 +781,7 @@
         "message": "Actualizar filtros automáticamente"
     },
     "options_set_update_interval_desc": {
-        "message": "Para un bloqueo más eficaz, los filtros deben actualizarse periódicamente."
+        "message": "Para un bloqueo más eficaz, los filtros necesitan ser actualizados periódicamente"
     },
     "options_userfilter_export": {
         "message": "Exportar"
@@ -674,17 +789,35 @@
     "options_editor_save": {
         "message": "Guardar"
     },
+    "options_editor_leave_title": {
+        "message": "¿Salir sin guardar?"
+    },
+    "options_editor_leave_confirm": {
+        "message": "Sí, salir"
+    },
+    "options_editor_leave_cancel": {
+        "message": "Volver a la edición"
+    },
     "options_userfilter_import": {
         "message": "Importar"
     },
     "options_userfilter_description_key": {
         "message": "Puedes añadir tus propias reglas aquí. Esta opción se recomienda para usuarios avanzados familiarizados con HTML\/CSS. Lee el <a>tutorial de reglas de filtro<\/a> para aprender a escribir tus propias reglas de filtro."
     },
+    "options_userfilter_subtitle_key": {
+        "message": "Ajusta el bloqueo de anuncios con tus propias reglas de filtrado"
+    },
+    "options_userfilter_line_break": {
+        "message": "Salto de línea"
+    },
     "options_userfilter_line_break_off": {
-        "message": "Salto de línea: Apagado"
+        "message": "Salto de línea: deshabilitado"
     },
     "options_userfilter_line_break_on": {
-        "message": "Salto de línea: Encendido"
+        "message": "Salto de línea: habilitado"
+    },
+    "options_userfilter_leave_subtitle": {
+        "message": "Tus cambios a las reglas se perderán"
     },
     "options_open_changelog": {
         "message": "Registro de cambios"
@@ -693,7 +826,7 @@
         "message": "Protección contra phishing y malware"
     },
     "options_safebrowsing_enabled_desc": {
-        "message": "Habilita el módulo de seguridad de navegación de AdGuard, que detecta los sitios potencialmente maliciosos y de phishing comprándolos con una base de datos en línea. <a>Más información<\/a>"
+        "message": "Habilita el módulo de seguridad de navegación de AdGuard, que detecta los sitios potencialmente maliciosos y de phishing comparándolos con una base de datos en línea. <a>Más información<\/a>"
     },
     "options_site": {
         "message": "Sitio web oficial"
@@ -709,6 +842,105 @@
     },
     "options_miscellaneous_settings": {
         "message": "Configuración adicional"
+    },
+    "options_rule_syntax": {
+        "message": "Sintaxis de regla"
+    },
+    "options_rule_limits": {
+        "message": "Límite de reglas"
+    },
+    "options_rule_limits_description": {
+        "message": "Chrome limita el número de reglas que pueden aplicarse"
+    },
+    "options_rule_limits_dynamic": {
+        "message": "Reglas dinámicas"
+    },
+    "options_rule_limits_dynamic_user_rules": {
+        "message": "Reglas agregadas por el usuario, como <user_rules>reglas de usuario<\/user_rules>, <allowlist>sitios web de la lista de permitidos<\/allowlist> y <custom_filters>filtros personalizados<\/custom_filters>"
+    },
+    "options_rule_limits_dynamic_unsafe": {
+        "description": "Note: First dollar sign is used to escape the second one, so eventually only one dollar sign will be displayed",
+        "message": "Reglas dinámicas no seguras (utilizadas para algunos modificadores avanzados, como $$redirect o $$cookie) — incluido en las reglas añadidas por el usuario"
+    },
+    "options_rule_limits_dynamic_regex": {
+        "message": "Reglas Regex — incluidas en las reglas añadidas por el usuario"
+    },
+    "options_rule_limits_static_rulesets": {
+        "message": "Conjuntos de reglas estáticas"
+    },
+    "options_rule_limits_static_rulesets_builtin": {
+        "message": "<a>Filtros incorporados<\/a>, como bloquear elementos molestos o filtros específicos por idioma"
+    },
+    "options_rule_limits_static_rules": {
+        "message": "Reglas estáticas"
+    },
+    "options_rule_limits_static_rules_all": {
+        "message": "Reglas de <a>filtros incorporados<\/a>"
+    },
+    "options_rule_limits_static_rules_regex": {
+        "message": "Reglas de expresiones regulares: incluidas en lo anterior"
+    },
+    "options_rule_limits_numbers": {
+        "message": "%current% de %maximum%"
+    },
+    "options_rule_limits_warning_title": {
+        "message": "El navegador ha modificado la lista de filtros activos"
+    },
+    "options_rule_limits_warning_explanation_title": {
+        "message": "¿Qué sucedió?"
+    },
+    "options_rule_limits_warning_explanation_description": {
+        "message": "Se ha superado el límite de reglas integradas activas después de una actualización o al añadir una nueva extensión. Según Manifest V3, tu navegador Chrome reaccionó deshabilitando todos los filtros integrados de la extensión, excepto los predeterminados."
+    },
+    "options_rule_limits_warning_list_enabled_before_title": {
+        "message": "Filtros habilitados antes de la actualización"
+    },
+    "options_rule_limits_warning_list_enabled_now_title": {
+        "message": "Filtros habilitados ahora"
+    },
+    "options_rule_limits_warning_actions_title": {
+        "message": "Tus posibles acciones"
+    },
+    "options_rule_limits_warning_actions_delete_filters": {
+        "message": "Opción 1. Elimine las extensiones para bloqueo de anuncios innecesarias de tu navegador. Para rehabilitar los filtros mencionados en la sección \"Filtros habilitados antes de la actualización\", haz clic en <a>rehabilitar filtros<\/a>."
+    },
+    "options_rule_limits_warning_actions_install_app": {
+        "message": "Opción 2. Instala la aplicación bloqueador de anuncios AdGuard: no tiene restricciones en las reglas de filtrado. <a>Obtener la aplicación AdGuard<\/a>"
+    },
+    "options_rule_limits_warning_actions_close_warning_one_filter": {
+        "message": "Option 3. Si estás satisfecho con el filtro predeterminado habilitado actualmente, <a>cierra esta advertencia<\/a>."
+    },
+    "options_rule_limits_warning_actions_close_warning_multiple_filters": {
+        "message": "Option 3. Si estás satisfecho con los filtros predeterminados habilitados actualmente, <a>cierra esta advertencia<\/a>."
+    },
+    "options_all_limits_exceeded_warning": {
+        "message": "Has alcanzado el límite de reglas incorporadas activas. Tu navegador ha modificado la lista de filtros incorporados activos. El número de filtros activados ha cambiado de %expected% a %current%."
+    },
+    "options_limits_warning_static_filters": {
+        "message": "Has alcanzado el límite de filtros integrados activos. %maximum% de %current% filtros están habilitados. Para habilitar nuevas reglas, deshabilita algunos filtros integrados."
+    },
+    "options_limits_warning_static_rules": {
+        "message": "Has alcanzado el límite de reglas incorporadas activas. %maximum% de %current% reglas están habilitados. Para habilitar nuevas reglas, deshabilita algunos filtros incorporados."
+    },
+    "options_limits_warning_static_regex_rules": {
+        "message": "Has alcanzado el límite de reglas regex incorporadas activas. %maximum% de %current% reglas regex están habilitadas. Para habilitar nuevas reglas, deshabilita algunos filtros incorporados."
+    },
+    "options_limits_warning_dynamic_rules": {
+        "message": "Has alcanzado el límite de reglas añadidas por el usuario. %maximum% de %current% reglas están habilitadas."
+    },
+    "options_limits_warning_dynamic_unsafe_rules": {
+        "message": "Has alcanzado el límite de reglas no seguras agregadas por el usuario. %maximum% de %current% reglas inseguras están habilitadas."
+    },
+    "options_limits_warning_dynamic_regex_rules": {
+        "message": "Has alcanzado el límite de reglas regex de usuario agregadas. %maximum% de %current% reglas regex están habilitadas."
+    },
+    "options_developer_mode_required": {
+        "message": "Tu navegador restringe <external-link>algunos tipos de reglas<\/external-link>. Para aplicar todas las reglas, <settings-link>habilita el modo desarrollador<\/settings-link>",
+        "description": "Note: <settings-link> and <external-link> are just <a> tags, so it would be rendered as a link."
+    },
+    "options_allow_user_scripts_required": {
+        "message": "Tu navegador restringe <external-link>algunos tipos de reglas<\/external-link>. Para aplicar todas las reglas, haz clic en <settings-link>permitir userscripts<\/settings-link>",
+        "description": "Note: <settings-link> and <external-link> are just <a> tags, so it would be rendered as a link."
     },
     "options_show_adguard_full_version_title": {
         "message": "Mostrar información sobre la versión completa de AdGuard"
@@ -738,7 +970,7 @@
         "message": "Ayudar con el desarrollo de los filtros de AdGuard"
     },
     "options_collect_hit_stats_desc": {
-        "message": "Envía <a>estadísticas anónimas sobre el uso de filtros de anuncios<\/a> que nos ayudarán a mejorarlos y optimizarlos."
+        "message": "Envía <a>estadísticas anónimas de uso de los filtros de anuncios<\/a> para ayudar a AdGuard a mejorar sus filtros"
     },
     "options_show_context_menu_title": {
         "message": "Añadir el elemento AdGuard al menú contextual del navegador"
@@ -747,31 +979,31 @@
         "message": "Usar filtros optimizados"
     },
     "options_use_optimized_filters_desc": {
-        "message": "Listas de filtros optimizados para dispositivos móviles."
+        "message": "Utiliza versiones más cortas de los filtros con solo las reglas más populares para ahorrar tráfico. Más adecuado para navegadores móviles."
     },
     "options_privacy_title": {
-        "message": "Modo sigiloso"
+        "message": "Protección contra rastreo"
     },
     "options_privacy_desc": {
-        "message": "Protege tu identidad e información personal sensible de miles de rastreadores en línea bloqueando los métodos de rastreo más populares."
+        "message": "Protege tu identidad e información personal sensible de miles de rastreadores en línea bloqueando la mayoría de métodos de rastreo populares."
     },
     "options_hide_referrer_title": {
         "message": "Ocultar Referrer a terceros"
     },
     "options_hide_referrer_desc": {
-        "message": "Impide que terceros sepan qué sitio web estás visitando."
+        "message": "Impide que terceros sepan qué sitio web estás visitando"
     },
     "options_hide_search_queries_title": {
         "message": "Ocultar tus consultas de búsqueda"
     },
     "options_hide_search_queries_desc": {
-        "message": "Oculta las consultas de los sitios web visitados desde un motor de búsqueda."
+        "message": "Oculta las consultas de los sitios web visitados desde un motor de búsqueda"
     },
     "options_send_not_track_title": {
-        "message": "Enviar señales a los sitios web para que no te rastreen"
+        "message": "Pedir a los sitios web que no te rastreen"
     },
     "options_send_not_track_desc": {
-        "message": "Envia las señales \"<gpc>Control de privacidad global<\/gpc>\" y \"<dnt>No rastrear<\/dnt>\" a los sitios web que estás visitando."
+        "message": "Envia las señales \"<gpc>Control de privacidad global<\/gpc>\" y \"<dnt>No rastrear<\/dnt>\" a los sitios web que estás visitando"
     },
     "options_stripped_tracking_parameters": {
         "message": "Parámetros de rastreo eliminados"
@@ -786,37 +1018,37 @@
         "message": "Eliminar encabezado X-Client-Data"
     },
     "options_remove_client_data_desc": {
-        "message": "Bloquea Google Chrome para que no envíe información sobre su versión y modificaciones a los dominios de Google."
+        "message": "Bloquea Google Chrome para que no envíe información sobre su versión y modificaciones a los dominios de Google"
     },
     "options_disable_webrtc_title": {
         "message": "Deshabilitar WebRTC"
     },
     "options_disable_webrtc_desc": {
-        "message": "WebRTC puede filtrar tu dirección IP incluso si utilizas proxy o VPN. Deshabilitar WebRTC puede romper algunos sitios web."
+        "message": "WebRTC puede filtrar tu dirección IP incluso si utilizas proxy o VPN. Deshabilitar WebRTC puede romper algunos sitios web"
     },
     "options_strip_tracking_params_title": {
         "message": "Eliminar parámetros de rastreo"
     },
     "options_strip_tracking_params_description": {
-        "message": "Elimina los parámetros de las peticiones web con el filtro contra rastreo de URL."
+        "message": "Elimina los parámetros de las peticiones web con el filtro contra rastreo de URL"
     },
     "options_block_known_trackers_title": {
         "message": "Bloquear rastreadores"
     },
     "options_block_known_trackers_description": {
-        "message": "Bloquea los rastreadores y herramientas de análisis web con el filtro de protección contra rastreo."
+        "message": "Bloquea los rastreadores y herramientas de análisis web con el filtro de protección contra rastreo"
     },
     "options_third_party_title": {
         "message": "Autodestrucción de cookies de terceros"
     },
     "options_third_party_desc": {
-        "message": "Limita la vida útil de las cookies de terceros (minutos)."
+        "message": "Limita la vida útil de las cookies de terceros (minutos)"
     },
     "options_first_party_title": {
         "message": "Autodestrucción de cookies del dominio (no recomendado)"
     },
     "options_first_party_desc": {
-        "message": "Limita la vida útil de las cookies del dominio (minutos)."
+        "message": "Limita la vida útil de las cookies del dominio (minutos)"
     },
     "popup_abuse_site": {
         "message": "Informar de un problema"
@@ -824,11 +1056,17 @@
     "popup_open_filtering_log": {
         "message": "Abrir registro de filtrado"
     },
+    "popup_tabs": {
+        "message": "Pestañas"
+    },
     "popup_tab_actions": {
         "message": "Acciones"
     },
     "popup_tab_statistics": {
         "message": "Estadísticas"
+    },
+    "popup_statistics_time_label": {
+        "message": "Periodo de tiempo de las estadísticas"
     },
     "popup_statistics_time_day": {
         "message": "Hace un día"
@@ -843,7 +1081,13 @@
         "message": "Año pasado"
     },
     "popup_switch_button": {
-        "message": "Interruptor de protección"
+        "message": "Protección para el sitio web actual"
+    },
+    "popup_limits_exceeded_warning": {
+        "message": "Tu navegador ha modificado la lista de filtros integrados activos"
+    },
+    "snack_on_websites_limits_exceeded_warning": {
+        "message": "Se ha excedido el límite de reglas en la extensión del navegador AdGuard. Revisa tus filtros y desactiva los que no necesites"
     },
     "short_name": {
         "message": "AdGuard"
@@ -863,6 +1107,9 @@
     "options_about_version": {
         "message": "Versión"
     },
+    "options_about_libs": {
+        "message": "Bibliotecas utilizadas"
+    },
     "options_copyright": {
         "message": "Todos los derechos reservados."
     },
@@ -881,38 +1128,44 @@
     "options_filters_search": {
         "message": "Buscar"
     },
+    "options_filters_search_filter": {
+        "message": "Buscar filtro"
+    },
     "options_about_title": {
         "message": "Extensión de navegador AdGuard"
     },
     "group_description_adblocking": {
-        "message": "Configura aquí el bloqueo de anuncios para acabar de una vez por todas con los molestos banners, ventanas emergentes y anuncios de vídeo."
+        "message": "Configura aquí el bloqueo de anuncios para acabar de una vez por todas con los molestos banners, ventanas emergentes y anuncios en vídeo."
     },
     "group_description_stealth": {
         "message": "Protege tu identidad e información personal sensible de miles de rastreadores en línea bloqueando todos los métodos de rastreo populares conocidos."
     },
     "group_description_social": {
-        "message": "Oculta botones \"Me gusta\"\/\"Compartir\" no deseados y otros widgets de redes sociales."
+        "message": "Oculta botones \"Me gusta\"\/\"Compartir\" no deseados y otros widgets de redes sociales"
     },
     "group_description_annoyances": {
-        "message": "Elimina ventanas emergentes y otras notificaciones molestas como avisos de cookies."
+        "message": "Elimina ventanas emergentes y otras notificaciones molestas como avisos de cookies"
     },
     "group_description_security": {
-        "message": "Protégete del malware, phishing y otras amenazas en línea."
+        "message": "Protégete del malware, phishing y otras amenazas en línea"
     },
     "group_description_miscellaneous": {
-        "message": "Más opciones para configurar aún más tu navegación web con AdGuard."
+        "message": "Más opciones para configurar aún más tu navegación web con AdGuard"
     },
     "group_description_custom": {
         "message": "Crea tus propios filtros para ajustar el filtrado web a tus preferencias."
     },
     "group_description_lang": {
-        "message": "No te limites, bloquea anuncios en sitios web en cualquier idioma."
+        "message": "No te limites, bloquea anuncios en sitios web en cualquier idioma"
     },
     "fullscreen_user_rules_title": {
         "message": "Reglas del usuario"
     },
     "options_user_rules_editor_stub_title": {
-        "message": "El editor ya está abierto"
+        "message": "Editor abierto en otra ventana"
+    },
+    "options_user_rules_editor_stub_subtitle": {
+        "message": "Tus reglas aparecerán aquí después de cerrarlas"
     },
     "options_user_rules_editor_stub_go_to_editor_button": {
         "message": "Ir al editor"
@@ -947,26 +1200,35 @@
     "filtering_log_details_modal_try_again": {
         "message": "Volver a intentar"
     },
+    "filtering_log_tag_request_source": {
+        "message": "Fuente de la petición"
+    },
     "filtering_log_tag_tooltip_first_party": {
-        "message": "Solo peticiones del dominio"
+        "message": "Peticiones del dominio"
     },
     "filtering_log_tag_tooltip_third_party": {
-        "message": "Solo peticiones de terceros"
+        "message": "Peticiones de terceros"
+    },
+    "filtering_log_tag_request_status": {
+        "message": "Estado de la solicitud"
     },
     "filtering_log_tag_tooltip_regular": {
-        "message": "Solo peticiones procesadas sin filtrar"
+        "message": "Peticiones procesadas sin filtrar"
     },
     "filtering_log_tag_tooltip_allowed": {
-        "message": "Solo peticiones permitidas y desbloqueadas"
+        "message": "Peticiones permitidas y desbloqueadas"
     },
     "filtering_log_tag_tooltip_blocked": {
-        "message": "Solo peticiones bloqueadas"
+        "message": "Peticiones bloqueadas"
     },
     "filtering_log_tag_tooltip_modified": {
-        "message": "Solo peticiones modificadas"
+        "message": "Peticiones modificadas"
     },
     "filtering_log_tag_tooltip_user_rules": {
-        "message": "Solo peticiones modificadas por las reglas del usuario"
+        "message": "Peticiones afectadas por reglas del usuario"
+    },
+    "filtering_log_tag_request_type": {
+        "message": "Tipo de petición"
     },
     "filtering_log_tag_tooltip_html": {
         "message": "Documentos y subdocumentos"
@@ -987,7 +1249,7 @@
         "message": "Multimedia"
     },
     "filtering_log_tag_tooltip_other": {
-        "message": "Fuentes, pings, WebRTC, WebSocket, etc."
+        "message": "Fuentes, pings, WebRTC, WebSocket..."
     },
     "filtering_log_badge_tooltip_third_party": {
         "message": "Petición de tercero"
@@ -998,6 +1260,9 @@
     "filtering_log_badge_tooltip_http_status_code": {
         "message": "Código de estado HTTP"
     },
+    "filtering_log_assumed_rule_description": {
+        "message": "Esta es una regla asumida. Para más detalles, consulta nuestra <a>base de conocimientos<\/a>"
+    },
     "options_stealth_general_title": {
         "message": "General"
     },
@@ -1006,6 +1271,9 @@
     },
     "options_stealth_miscellaneous_title": {
         "message": "Varios"
+    },
+    "options_coming_soon": {
+        "message": "Próximamente"
     },
     "blocking_pages_malware": {
         "message": "Esta página en <strong>%host%<\/strong> ha sido reportada como una página de malware y ha sido bloqueada basado en tus preferencias de seguridad."
@@ -1045,5 +1313,23 @@
     },
     "close_button_title": {
         "message": "Cerrar"
+    },
+    "clear_button_title": {
+        "message": "Borrar"
+    },
+    "filtering_modal_applied_rules": {
+        "message": "| Regla aplicada: | Reglas aplicadas:",
+        "description": "WARNING: correct number of plural forms is required"
+    },
+    "filtering_modal_assumed_rules": {
+        "message": "| Regla asumida: | Reglas asumidas:",
+        "description": "WARNING: correct number of plural forms is required"
+    },
+    "filtering_modal_original_rules": {
+        "message": "| Regla original: | Reglas originales:",
+        "description": "WARNING: correct number of plural forms is required"
+    },
+    "filtering_modal_declarative_rule": {
+        "message": "Regla DNR:"
     }
 }

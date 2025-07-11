@@ -16,6 +16,7 @@
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 import { nanoid } from 'nanoid';
+
 import {
     ADGUARD_SETTINGS_KEY,
     APP_VERSION_KEY,
@@ -23,14 +24,18 @@ import {
     SCHEMA_VERSION_KEY,
 } from '../../../common/constants';
 import { defaultSettings } from '../../../common/settings';
-import { storage } from '../../storages';
-import { RunInfo } from '../../utils';
+import { browserStorage } from '../../storages';
+import { type RunInfo } from '../../utils';
 
+/**
+ * The Install API should set the base version of the schema and application,
+ * generate a client ID and set default values if the extension has been installed.
+ */
 export class InstallApi {
     /**
-     * Generate client id
+     * Generate client id.
      *
-     * @returns client id string
+     * @returns Client id string.
      */
     public static genClientId(): string {
         const suffix = (Date.now()) % 1e8;
@@ -38,19 +43,31 @@ export class InstallApi {
     }
 
     /**
-     * Initializes app install
+     * Initializes app install.
      *
-     * @param runInfo - info about extension start up
-     * @param runInfo.currentAppVersion - current extension version
-     * @param runInfo.currentSchemaVersion - current data schema version
-     *
+     * @param runInfo Info about extension start up.
+     * @param runInfo.currentSchemaVersion Current data schema version.
      */
-    public static async install({ currentAppVersion, currentSchemaVersion }: RunInfo): Promise<void> {
+    public static async install({ currentSchemaVersion }: RunInfo): Promise<void> {
         const clientId = InstallApi.genClientId();
-        await storage.set(CLIENT_ID_KEY, clientId);
+        await browserStorage.set(CLIENT_ID_KEY, clientId);
 
-        await storage.set(SCHEMA_VERSION_KEY, currentSchemaVersion);
-        await storage.set(APP_VERSION_KEY, currentAppVersion);
-        await storage.set(ADGUARD_SETTINGS_KEY, defaultSettings);
+        await browserStorage.set(SCHEMA_VERSION_KEY, currentSchemaVersion);
+
+        await browserStorage.set(ADGUARD_SETTINGS_KEY, defaultSettings);
+    }
+
+    /**
+     * This method is called after a successful update of the extension.
+     * If the extension installation is interrupted for some reason,
+     * for example, if the user runs the extension in private mode and the initiation stops,
+     * this method is not called. This ensures that actions needed upon
+     * initialization will be called again since the version did not change.
+     * Issue: https://github.com/AdguardTeam/AdguardBrowserExtension/issues/2713.
+     *
+     * @param currentAppVersion Current extension version.
+     */
+    public static async postSuccessInstall(currentAppVersion: string): Promise<void> {
+        await browserStorage.set(APP_VERSION_KEY, currentAppVersion);
     }
 }

@@ -17,10 +17,28 @@
  */
 import zod from 'zod';
 
+const groupInfo = zod.object({
+    /**
+     * The name of the filter group.
+     */
+    name: zod.string(),
+
+    /**
+     * The description of the filter group.
+     */
+    description: zod.string(),
+});
+
 export const groupI18nMetadataValidator = zod.record(
-    zod.string(), zod.object({
-        name: zod.string(),
-    }),
+    /**
+     * Locale code.
+     */
+    zod.string(),
+    groupInfo,
 );
 
+/**
+ * Describes an object in which the language codes are keys and the group name
+ * is the value.
+ */
 export type GroupI18nMetadata = zod.infer<typeof groupI18nMetadataValidator>;

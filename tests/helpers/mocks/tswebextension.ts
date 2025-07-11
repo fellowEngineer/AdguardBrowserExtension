@@ -1,23 +1,26 @@
-import type {
-    TsWebExtension,
-    EventChannel,
-    FilteringLogEvent,
-    ConfigurationMV2Context,
+import { vi } from 'vitest';
+
+// TODO: Use 'tswebextension' alias to work with mv3 version. AG-37302
+import {
+    type EventChannel,
+    type FilteringLogEvent,
+    type ConfigurationMV2Context,
 } from '@adguard/tswebextension';
 
 import { MockedEventCannel } from './event-channel';
 
-export class MockedTsWebExtension implements TsWebExtension {
+// TODO: restore inherit from TsWebExtension after lib module resolves update if needed.
+export class MockedTsWebExtension {
     public isStarted = false;
 
-    public configuration: ConfigurationMV2Context | undefined;
+    public configuration = {} as ConfigurationMV2Context;
 
-    public start = jest.fn(async () => {
+    public start = vi.fn(async () => {
         this.isStarted = true;
         return Promise.resolve();
     });
 
-    public configure = jest.fn(async () => {
+    public configure = vi.fn(async () => {
         if (!this.isStarted) {
             return Promise.reject();
         }
@@ -25,22 +28,48 @@ export class MockedTsWebExtension implements TsWebExtension {
         return Promise.resolve();
     });
 
-    public stop = jest.fn(async () => {
+    public stop = vi.fn(async () => {
         this.isStarted = false;
         return Promise.resolve();
     });
 
-    public openAssistant = jest.fn(() => Promise.resolve());
+    public openAssistant = vi.fn(() => Promise.resolve());
 
-    public closeAssistant = jest.fn(() => Promise.resolve());
+    public closeAssistant = vi.fn(() => Promise.resolve());
 
-    public getRulesCount = jest.fn(() => 0);
+    public getRulesCount = vi.fn(() => 0);
 
-    public setLocalScriptRules = jest.fn(() => {});
+    public setLocalScriptRules = vi.fn();
 
-    public getMessageHandler = jest.fn(() => jest.fn());
+    public getMessageHandler = vi.fn(() => vi.fn());
 
     public onFilteringLogEvent = new MockedEventCannel() as unknown as EventChannel<FilteringLogEvent>;
 
     public onAssistantCreateRule = new MockedEventCannel() as unknown as EventChannel<string>;
+
+    public setFilteringEnabled = vi.fn();
+
+    public setCollectHitStats = vi.fn();
+
+    public setDebugScriptlets = vi.fn();
+
+    public setStealthModeEnabled = vi.fn();
+
+    public setSelfDestructFirstPartyCookies = vi.fn();
+
+    public setSelfDestructThirdPartyCookies = vi.fn();
+
+    public setSelfDestructFirstPartyCookiesTime = vi.fn();
+
+    public setSelfDestructThirdPartyCookiesTime = vi.fn();
+
+    public setHideReferrer = vi.fn();
+
+    public setHideSearchQueries = vi.fn();
+
+    public setBlockChromeClientData = vi.fn();
+
+    public setSendDoNotTrack = vi.fn();
+
+    public setBlockWebRTC = vi.fn();
 }

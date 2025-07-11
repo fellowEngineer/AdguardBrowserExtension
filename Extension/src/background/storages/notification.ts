@@ -16,136 +16,277 @@
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 import browser from 'webextension-polyfill';
-import { NotificationTextRecord } from '../schema';
 
-export type Notification = {
-     id: string,
-     locales: Record<string, NotificationTextRecord>
-     url: string,
-     text: string | NotificationTextRecord | null,
-     from: string,
-     to: string,
-     type: string,
-     bgColor?: string,
-     textColor?: string,
-     badgeBgColor?: string,
-     badgeText?: string,
-     icons?: Record<string, Record<string, string>>,
- };
+import { Forward, ForwardAction } from '../../common/forward';
+import { type NotificationTextRecord } from '../schema';
+import { defaultIconVariants } from '../api/ui/icons';
 
-export const BACK_TO_SCHOOL_22_ID = 'backToSchool22';
+/**
+ * Icon data for different sizes.
+ */
+export type IconData = {
+    /**
+     * 19x19 icon size.
+     */
+    '19': string;
 
-export const backToSchool22Notification: Notification = {
-    id: BACK_TO_SCHOOL_22_ID,
+    /**
+     * 38x38 icon size.
+     */
+    '38': string;
+};
+
+/**
+ * Icon variants for different states.
+ */
+export type IconVariants = {
+    /**
+     * Enabled state icon variants (when AdGuard is enabled).
+     */
+    enabled: IconData;
+
+    /**
+     * Disabled state icon variants (when AdGuard is disabled).
+     */
+    disabled: IconData;
+
+    /**
+     * State icon variants when MV3 limitations are exceeded.
+     */
+    warning: IconData;
+};
+
+export type PromoNotification = {
+    id: string;
+    locales: Record<string, NotificationTextRecord>;
+    url: string;
+    text: string | NotificationTextRecord | null;
+    from: string;
+    to: string;
+    type: string;
+
+    /**
+     * Path to the background image for the promo.
+     * May be needed for different promos for different locales at the same time.
+     */
+    bgImage: string;
+
+    /**
+     * Update popup background image may have a bit different width.
+     */
+    bgImageOnUpdate?: string;
+    bgColor?: string;
+    textColor?: string;
+    badgeBgColor?: string;
+    badgeText?: string;
+    icons?: IconVariants;
+};
+
+const BIRTHDAY_25_ID = 'birthday25';
+
+const birthday25Notification: PromoNotification = {
+    id: BIRTHDAY_25_ID,
     locales: {
         en: {
-            title: 'Back',
-            desc: 'to school',
-            btn: 'Get 40% off',
-        },
-        ru: {
-            title: 'Снова в',
-            desc: 'школу',
-            btn: '-40% на всё',
-        },
-        es: {
-            title: 'Vuelta al',
-            desc: 'cole',
-            btn: 'Obtén un 40% off',
-        },
-        de: {
-            title: 'Zurück zur',
-            desc: 'Schule',
-            btn: '40% Rabatt',
+            title: 'Long story short: birthday sale',
+            btn: 'Dive in',
         },
         fr: {
-            title: 'La rentrée',
-            desc: 'scolaire',
-            btn: '40% de remise',
+            title: "La chose à noter : c'est notre anniversaire !",
+            btn: 'Voyons voir',
         },
         it: {
-            title: 'Ritorno a',
-            desc: 'scuola',
-            btn: '40% di sconto',
+            title: "C'é il nostro anniversario, vieni vedere",
+            btn: 'Vedi le cose',
         },
-        ko: {
-            title: '백 투 스쿨',
-            desc: '세일',
-            btn: '40% 할인',
+        de: {
+            title: 'Eine Geschichte mit Rabatten',
+            btn: 'Jetzt entdecken',
         },
-        zh_cn: {
-            title: '开学啦',
-            btn: '一律享受40%折扣',
+        ru: {
+            title: 'Есть что рассказать и подарить',
+            btn: 'А ну-ка',
         },
-        zh_tw: {
-            title: '開學啦',
-            btn: '獲得40%的折扣',
+        es: {
+            title: 'Tenemos algo que decir y algo que regalarte',
+            btn: '¿Qué és?',
         },
-        uk: {
-            title: 'Знову до',
-            desc: 'школи',
-            btn: 'Знижка 40%',
+        es_419: {
+            title: 'Tenemos algo que decir y algo que regalarte',
+            btn: '¿Qué és?',
         },
         pt_pt: {
-            title: 'De volta à',
-            desc: 'escola',
-            btn: 'Obter 40% de desconto',
+            title: 'Temos algo a dizer, e algo a presentear',
+            btn: 'O que é?',
         },
         pt_br: {
-            title: 'De volta à',
-            desc: 'escola',
-            btn: 'Obtenha 40% de desconto',
+            title: 'Há algo que precisamos dizer… e uma surpresa',
+            btn: 'O que é?',
+        },
+        zh_cn: {
+            title: '周年庆大促',
+            btn: '立即参与',
+        },
+        zh_tw: {
+            title: '周年慶大促',
+            btn: '立即參與',
+        },
+        ja: {
+            title: 'AdGuard 16周年セール',
+            btn: 'セール内容はこちら',
+        },
+        ko: {
+            title: '16주년 기념 세일',
+            btn: '자세히 알아보기',
+        },
+        uk: {
+            title: 'Історія зі знижкою',
+            btn: 'Дізнатися',
         },
         ar: {
-            title: 'العودة',
-            desc: 'إلى المدرسة',
-            btn: '%احصل على خصم 40',
+            title: 'قصة تنتهي بخصم',
+            btn: 'اكتشف',
         },
         be: {
-            title: 'Назад у',
-            desc: 'школу',
-            btn: 'Атрымайце скідку 40%',
+            title: 'Гісторыя са зніжкай',
+            btn: 'Даведайся',
+        },
+        bg: {
+            title: 'История с отстъпка',
+            btn: 'Научи се',
+        },
+        ca: {
+            title: 'Història amb descompte',
+            btn: 'Descobreix',
+        },
+        cs: {
+            title: 'Příběh se slevou',
+            btn: 'Zjistit',
+        },
+        da: {
+            title: 'Historie med rabat',
+            btn: 'Find ud af',
+        },
+        el: {
+            title: 'Ιστορία με έκπτωση',
+            btn: 'Μάθετε',
+        },
+        fa: {
+            title: 'داستانی با تخفیف',
+            btn: 'کشف کن',
+        },
+        fi: {
+            title: 'Tarina alennuksella',
+            btn: 'Opi',
+        },
+        he: {
+            title: 'סיפור עם הנחה',
+            btn: 'גלה',
+        },
+        hr: {
+            title: 'Priča s popustom',
+            btn: 'Saznaj',
+        },
+        hu: {
+            title: 'Történet kedvezménnyel',
+            btn: 'Tudj meg',
+        },
+        hy: {
+            title: 'Պատմություն զեղչով',
+            btn: 'Բացահայտել',
         },
         id: {
-            title: 'Kembali ke',
-            desc: 'sekolah',
-            btn: 'Dapatkan diskon 40%',
+            title: 'Cerita dengan diskon',
+            btn: 'Cari tahu',
+        },
+        lt: {
+            title: 'Istorija su nuolaida',
+            btn: 'Sužinoti',
+        },
+        ms: {
+            title: 'Kisah dengan diskaun',
+            btn: 'Ketahui',
+        },
+        nb: {
+            title: 'Historie med rabatt',
+            btn: 'Finn ut',
+        },
+        nl: {
+            title: 'Verhaal met korting',
+            btn: 'Ontdek',
         },
         pl: {
-            title: 'Powrót do',
-            desc: 'szkoły',
-            btn: 'Zyskaj 40% zniżki',
+            title: 'Historia ze zniżką',
+            btn: 'Dowiedz się',
+        },
+        ro: {
+            title: 'Poveste cu reducere',
+            btn: 'Află',
+        },
+        sk: {
+            title: 'Príbeh so zľavou',
+            btn: 'Zistiť',
+        },
+        sl: {
+            title: 'Zgodba s popustom',
+            btn: 'Izvedi',
+        },
+        sr_latn: {
+            title: 'Priča sa popustom',
+            btn: 'Saznaj',
+        },
+        sv: {
+            title: 'Berättelse med rabatt',
+            btn: 'Ta reda på',
         },
         tr: {
-            title: 'Okula dönüş',
-            btn: '40 indirim kazanın',
+            title: 'İndirimli hikaye',
+            btn: 'Keşfet',
         },
         vi: {
-            title: 'Trở lại',
-            desc: 'trường học',
-            btn: 'Được GIẢM GIÁ 40%',
+            title: 'Câu chuyện giảm giá',
+            btn: 'Tìm hiểu',
+        },
+        mk: {
+            title: 'Приказна со попуст',
+            btn: 'Дознај',
+        },
+        hi: {
+            title: 'छूट वाली कहानी',
+            btn: 'जानें',
+        },
+        et: {
+            title: 'Lugu allahindlusega',
+            btn: 'Uuri',
+        },
+        th: {
+            title: 'เรื่องราวพร้อมส่วนลด',
+            btn: 'ค้นหา',
         },
     },
     text: '',
-    url: 'https://link.adtidy.org/forward.html?action=back_to_school&app=browser_extension',
-    from: '30 August 2022 12:00:00',
-    to: '4 September 2022 23:59:00',
+    url: Forward.get({ action: ForwardAction.Birthday25 }),
+    from: '30 May 2025 12:00:00',
+    to: '5 June 2025 23:59:00',
     type: 'animated',
+    bgImage: browser.runtime.getURL('assets/images/birthday25.svg'),
+    bgImageOnUpdate: browser.runtime.getURL('assets/images/birthday25-update.svg'),
     icons: {
-        ICON_GREEN: {
-            '19': browser.runtime.getURL('assets/icons/promo-on-19.png'),
-            '38': browser.runtime.getURL('assets/icons/promo-on-38.png'),
+        enabled: {
+            '19': browser.runtime.getURL('assets/icons/birthday25-on-19.png'),
+            '38': browser.runtime.getURL('assets/icons/birthday25-on-38.png'),
         },
-        ICON_GRAY: {
-            '19': browser.runtime.getURL('assets/icons/promo-off-19.png'),
-            '38': browser.runtime.getURL('assets/icons/promo-off-38.png'),
+        disabled: {
+            '19': browser.runtime.getURL('assets/icons/birthday25-off-19.png'),
+            '38': browser.runtime.getURL('assets/icons/birthday25-off-38.png'),
         },
+        warning: defaultIconVariants.warning,
     },
 };
 
 /**
- * In-memory notifications mapping
+ * In-memory notifications mapping.
  */
-export const notificationStorage = new Map<string, Notification>([
-    [BACK_TO_SCHOOL_22_ID, backToSchool22Notification],
+export const notificationStorage = new Map<string, PromoNotification>([
+    [BIRTHDAY_25_ID, birthday25Notification],
 ]);

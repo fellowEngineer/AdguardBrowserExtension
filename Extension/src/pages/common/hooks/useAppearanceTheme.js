@@ -16,8 +16,9 @@
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import throttle from 'lodash/throttle';
 import { useLayoutEffect } from 'react';
+
+import { throttle } from 'lodash-es';
 
 import { AppearanceTheme } from '../../../common/settings';
 

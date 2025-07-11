@@ -17,6 +17,7 @@
  */
 
 /* eslint-disable jsx-a11y/no-static-element-interactions */
+
 import React, {
     useContext,
     useEffect,
@@ -26,17 +27,18 @@ import React, {
 } from 'react';
 import Modal from 'react-modal';
 import { observer } from 'mobx-react';
+
 import cn from 'classnames';
 
 import { rootStore } from '../../../stores/RootStore';
 import { RequestInfo } from '../RequestInfo';
-import { WIZARD_STATES } from '../../../stores/WizardStore';
 import { RequestCreateRule } from '../RequestCreateRule';
 import { optionsStorage } from '../../../../options/options-storage';
+import { WizardRequestState } from '../../../constants';
 import { RequestPreview } from '../RequestPreview';
 import { DEFAULT_MODAL_WIDTH_PX } from '../constants';
 
-import './RequestModal.pcss';
+import './request-modal.pcss';
 
 Modal.setAppElement('#root');
 
@@ -61,8 +63,7 @@ const RequestModal = observer(() => {
         || DEFAULT_MODAL_WIDTH_PX;
 
     const [modalWidth, setModalWidth] = useState(startModalWidth);
-
-    const dragBar = useRef(null);
+    const isDraggingRef = useRef(false);
 
     const {
         isModalOpen,
@@ -74,18 +75,18 @@ const RequestModal = observer(() => {
     let modalContent;
 
     switch (requestModalState) {
-        case WIZARD_STATES.VIEW_REQUEST: {
+        case WizardRequestState.View: {
             modalContent = <RequestInfo />;
             break;
         }
 
-        case WIZARD_STATES.BLOCK_REQUEST:
-        case WIZARD_STATES.UNBLOCK_REQUEST: {
+        case WizardRequestState.Block:
+        case WizardRequestState.Unblock: {
             modalContent = <RequestCreateRule />;
             break;
         }
 
-        case WIZARD_STATES.PREVIEW_REQUEST: {
+        case WizardRequestState.Preview: {
             modalContent = <RequestPreview />;
             break;
         }
@@ -94,7 +95,7 @@ const RequestModal = observer(() => {
             modalContent = <RequestInfo />;
     }
 
-    const className = cn('ReactModal__Content request-modal', {
+    const className = cn('ReactModal__Content request-modal thin-scrollbar', {
         'request-modal__view': requestModalStateEnum.isView,
         'request-modal__block': requestModalStateEnum.isBlock,
         'request-modal__unblock': requestModalStateEnum.isUnblock,
@@ -105,7 +106,11 @@ const RequestModal = observer(() => {
         optionsStorage.setItem(optionsStorage.KEYS.REQUEST_INFO_MODAL_WIDTH, width);
     };
 
-    const drag = (e) => {
+    const pointerMoveHandler = (e) => {
+        if (!isDraggingRef.current) {
+            return;
+        }
+
         const newWidth = window.innerWidth - e.pageX;
         if (newWidth < DEFAULT_MODAL_WIDTH_PX
             || newWidth > window.innerWidth * MAX_MODAL_WIDTH_RATIO) {
@@ -115,13 +120,23 @@ const RequestModal = observer(() => {
         persistModalWidth(newWidth);
     };
 
-    const mouseDownHandler = () => {
-        const cleaner = () => {
-            document.removeEventListener('mousemove', drag);
-            document.removeEventListener('mouseup', cleaner);
-        };
-        document.addEventListener('mouseup', cleaner);
-        document.addEventListener('mousemove', drag);
+    const BODY_RESIZE_CLASS_NAME = 'col-resize';
+
+    const pointerDownHandler = (e) => {
+        e.target.setPointerCapture(e.pointerId);
+        isDraggingRef.current = true;
+        document.body.classList.add(BODY_RESIZE_CLASS_NAME);
+    };
+
+    const pointerUpHandler = (e) => {
+        const target = e.target;
+        if (!target.hasPointerCapture(e.pointerId)) {
+            return;
+        }
+
+        target.releasePointerCapture(e.pointerId);
+        isDraggingRef.current = false;
+        document.body.classList.remove(BODY_RESIZE_CLASS_NAME);
     };
 
     return (
@@ -137,9 +152,12 @@ const RequestModal = observer(() => {
             }}
         >
             <div
-                ref={dragBar}
                 className="request-modal__dragbar"
-                onMouseDown={mouseDownHandler}
+                onPointerMove={pointerMoveHandler}
+                onPointerDown={pointerDownHandler}
+                onPointerUp={pointerUpHandler}
+                onPointerLeave={pointerUpHandler}
+                aria-hidden="true"
             />
             {modalContent}
         </Modal>

@@ -17,26 +17,56 @@
  */
 import { HIT_STATISTIC_KEY } from '../../common/constants';
 import { StringStorage } from '../utils/string-storage';
-import { HitStatsStorageData } from '../schema';
-import { storage } from './main';
+import { type HitStatsStorageData } from '../schema';
+
+import { browserStorage } from './shared-instances';
+import { filterVersionStorage } from './filter-version';
 
 /**
  * Class for asynchronous control {@link HitStats} storage data,
- * that is persisted as string in another key value storage
+ * that is persisted as string in another key value storage.
  *
  * @see {@link StringStorage}
  */
-export class HitStatsStorage extends StringStorage<typeof HIT_STATISTIC_KEY, HitStatsStorageData, 'async'> {
+class HitStatsStorage extends StringStorage<typeof HIT_STATISTIC_KEY, HitStatsStorageData, 'async'> {
     /**
-     * Add 1 rule hit to stats
+     * Caches filter version if it is not cached yet.
      *
-     * @param ruleText - rule test
-     * @param filterId - filter id
-     * @throws error, if storage is not initialized
+     * @param filterId Filter id.
+     *
+     * @throws Error, if storage is not initialized.
+     */
+    private cacheFilterVersionIfNeeded(filterId: number): void {
+        if (!this.data) {
+            throw HitStatsStorage.createNotInitializedError();
+        }
+
+        if (!this.data.versions) {
+            this.data.versions = {};
+        }
+
+        const id = String(filterId);
+
+        if (!this.data.versions[id]) {
+            const data = filterVersionStorage.get(filterId);
+
+            if (data) {
+                this.data.versions[id] = data.version;
+            }
+        }
+    }
+
+    /**
+     * Add 1 rule hit to stats.
+     *
+     * @param filterId Filter id.
+     * @param ruleIndex Rule index.
+     *
+     * @throws Error, if storage is not initialized.
      */
     addRuleHitToCache(
-        ruleText: string,
         filterId: number,
+        ruleIndex: number,
     ): void {
         if (!this.data) {
             throw HitStatsStorage.createNotInitializedError();
@@ -52,28 +82,35 @@ export class HitStatsStorage extends StringStorage<typeof HIT_STATISTIC_KEY, Hit
 
         const id = String(filterId);
 
+        this.cacheFilterVersionIfNeeded(filterId);
+
         let rules = this.data.stats.filters[id];
 
         if (!rules) {
             rules = {};
         }
 
-        rules[ruleText] = (rules[ruleText] || 0) + 1;
+        rules[ruleIndex] = (rules[ruleIndex] || 0) + 1;
         this.data.stats.filters[id] = rules;
         this.data.totalHits = (this.data.totalHits || 0) + 1;
     }
 
+    /**
+     * Helper function to create a basic {@link Error} with a custom message.
+     *
+     * @returns A basic {@link Error} with a custom message.
+     */
     private static createNotInitializedError(): Error {
         return new Error('hit stats is not initialized');
     }
 }
 
 /**
- * {@link HitStatsStorage} instance, that stores
- * stringified {@link HitStats} in {@link storage} under
- * {@link HIT_STATISTIC_KEY} key
+ * Instance of {@link HitStatsStorage}, that stores
+ * stringified {@link HitStats} in {@link browserStorage} under
+ * {@link HIT_STATISTIC_KEY} key.
  */
 export const hitStatsStorage = new HitStatsStorage(
     HIT_STATISTIC_KEY,
-    storage,
+    browserStorage,
 );

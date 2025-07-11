@@ -735,12 +735,43 @@ ace.define('ace/mode/csp_highlight_rules', [], (require, exports, module) => {
     exports.CspHighlightRules = CspHighlightRules;
 });
 
+ace.define('ace/mode/permissions_highlight_rules', [], (require, exports, module) => {
+    const oop = require('../lib/oop');
+    const { TextHighlightRules } = require('./text_highlight_rules');
+
+    const PermissionsHighlightRules = function () {
+        this.$rules = {
+            start: [{
+                token: 'string',
+                regex: /"(?:[^"\\]|\\.)*"?/,
+            }, {
+                token: 'string.link',
+                regex: /https?:[^\s\)]*/,
+            }, {
+                token: 'operator.punctuation',
+                regex: /[\|=,\(\)\*]|\\,/,
+            }, {
+                token: 'variable',
+                regex: /self/,
+            }, {
+                token: 'constant',
+                regex: /(accelerometer|ambient-light-sensor|autoplay|battery|camera|display-capture|document-domain|encrypted-media|execution-while-not-rendered|execution-while-out-of-viewport|fullscreen|gamepad|geolocation|gyroscope|hid|identity-credentials-get|idle-detection|local-fonts|magnetometer|microphone|midi|payment|picture-in-picture|publickey-credentials-create|publickey-credentials-get|screen-wake-lock|serial|speaker-selection|storage-access|usb|web-share|xr-spatial-tracking)(?=\s*=)/,
+            }],
+        };
+    };
+
+    oop.inherits(PermissionsHighlightRules, TextHighlightRules);
+
+    exports.PermissionsHighlightRules = PermissionsHighlightRules;
+});
+
 ace.define('ace/mode/adguard_highlight_rules', [], (require, exports, module) => {
     const oop = require('../lib/oop');
     const { TextHighlightRules } = require('./text_highlight_rules');
     const { CssHighlightRules } = require('./css_highlight_rules');
     const { JavaScriptHighlightRules } = require('./javascript_highlight_rules');
     const { CspHighlightRules } = require('./csp_highlight_rules');
+    const { PermissionsHighlightRules } = require('./permissions_highlight_rules');
 
     const AdguardHighlightRules = function () {
         this.$rules = {
@@ -850,6 +881,16 @@ ace.define('ace/mode/adguard_highlight_rules', [], (require, exports, module) =>
                     next: 'csp-start',
                 },
                 {
+                    regex: /permissions=/,
+                    token: 'keyword.control',
+                    next: 'permissions-start',
+                },
+                // https://github.com/AdguardTeam/AdguardBrowserExtension/issues/2609
+                {
+                    regex: /inline-font|inline-script/,
+                    token: 'keyword.control',
+                },
+                {
                     regex: /document|doc|elemhide|ehide|specifichide|shide|generichide|ghide|genericblock|content|urlblock|jsinject|stealth/,
                     token: 'keyword.control',
                 },
@@ -950,6 +991,16 @@ ace.define('ace/mode/adguard_highlight_rules', [], (require, exports, module) =>
             regex: /,/,
             next: 'options',
         }]);
+        this.embedRules(PermissionsHighlightRules, 'permissions-', [{
+            token: 'text',
+            regex: /$/,
+            next: 'start',
+        },
+        {
+            token: 'text',
+            regex: /,/,
+            next: 'options',
+        }]);
         this.embedRules(CssHighlightRules, 'css-', [{
             token: 'text',
             regex: /\}?$/,
@@ -961,7 +1012,9 @@ ace.define('ace/mode/adguard_highlight_rules', [], (require, exports, module) =>
             next: 'start',
         }, {
             token: 'invalid',
-            regex: '{',
+            // pseudo-class regexp arg may contain left curly brace
+            // #?#div:contains(/^\s{8} $/)
+            regex: '/(?<=\(.+?\/)){/',
             next: 'invalid',
         }]);
         this.embedRules(CssHighlightRules, 'html-filtering-', [{

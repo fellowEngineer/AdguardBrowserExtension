@@ -19,19 +19,31 @@
 import React, { useState, useEffect } from 'react';
 import ReactResizeDetector from 'react-resize-detector';
 import AceEditor from 'react-ace';
+
 import cn from 'classnames';
+// These side effects imports must be placed after the 'react-ace' import
+import 'ace-builds/src-noconflict/ext-searchbox.js';
+import 'ace-builds/src-noconflict/theme-textmate.js';
+import 'ace-builds/src-noconflict/mode-text.js';
 
-import 'ace-builds/src-noconflict/ext-searchbox';
-import 'ace-builds/src-noconflict/theme-textmate';
-import 'ace-builds/src-noconflict/mode-text';
+import { logger } from '../../../../common/logger';
+import { UserAgent } from '../../../../common/user-agent';
 
-import { Log } from '../../../../common/log';
-import './mode-adguard';
+import './mode-adguard.js';
 
 import './editor.pcss';
 
+/**
+ * Helper to get Oculus-specific class for the editor container.
+ *
+ * Task: AG-43589 — see this task number for the related CSS workaround.
+ */
+const getOculusClass = () => {
+    return UserAgent.isOculus ? 'oculus-browser' : '';
+};
+
 const DEFAULT_EDITOR_SIZE = {
-    width: '610px',
+    width: '618px',
     height: '300px',
 };
 
@@ -41,11 +53,13 @@ const Editor = ({
     name,
     value,
     editorRef,
-    shortcuts,
+    shortcuts = [],
     onChange,
     fullscreen,
     highlightRules,
     shouldResetSize,
+    onSave,
+    onExit,
 }) => {
     const SIZE_STORAGE_KEY = `${name}_editor-size`;
     const editorStorageSize = localStorage.getItem(SIZE_STORAGE_KEY);
@@ -57,7 +71,7 @@ const Editor = ({
                 setSize(JSON.parse(editorStorageSize));
             } catch (e) {
                 setSize(DEFAULT_EDITOR_SIZE);
-                Log.debug(e.message);
+                logger.debug('[ext.Editor]: failed to parse editor size from storage: ', e.message);
             }
         }
     }, [editorStorageSize]);
@@ -87,10 +101,25 @@ const Editor = ({
     const editorClassName = cn(
         'editor',
         { 'editor--full-screen': fullscreen },
+        getOculusClass(),
     );
 
     // highlight rules syntax only for user rules
     const editorMode = highlightRules ? 'adguard' : 'text';
+
+    const mergedShortcuts = [
+        {
+            name: 'save',
+            bindKey: { win: 'Ctrl-S', mac: 'Command-S' },
+            exec: onSave,
+        },
+        {
+            name: 'exit',
+            bindKey: { win: 'Esc', mac: 'Esc' },
+            exec: onExit,
+        },
+        ...shortcuts,
+    ];
 
     return (
         <div style={editorStyles} className={editorClassName}>
@@ -105,7 +134,7 @@ const Editor = ({
                 editorProps={{ $blockScrolling: true }}
                 fontSize={14}
                 value={value}
-                commands={shortcuts}
+                commands={mergedShortcuts}
                 onChange={onChange}
             />
             <ReactResizeDetector

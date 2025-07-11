@@ -17,23 +17,39 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
-import { Icon } from '../../../../common/components/ui/Icon';
 
-const ModalContentWrapper = ({ closeModalHandler, children, title }) => {
+import PropTypes from 'prop-types';
+
+import { Icon } from '../../../../common/components/ui/Icon';
+import { translator } from '../../../../../common/translators/translator';
+
+const ModalContentWrapper = ({
+    closeModalHandler,
+    title,
+    actions,
+    children,
+}) => {
     return (
         <div className="modal">
-            <button
-                type="button"
-                className="button"
-                onClick={closeModalHandler}
-            >
-                <Icon id="#cross" classname="modal__close" />
-            </button>
-            <div className="modal__title">
-                {title}
+            <div className="modal__content">
+                <div className="modal__header">
+                    {title && (
+                        <div className="modal__title">
+                            {title}
+                        </div>
+                    )}
+                    <button
+                        type="button"
+                        className="button modal__close"
+                        onClick={closeModalHandler}
+                        title={translator.getMessage('close_button_title')}
+                    >
+                        <Icon id="#cross" aria-hidden="true" />
+                    </button>
+                </div>
+                {children}
             </div>
-            {children}
+            {actions}
         </div>
     );
 };

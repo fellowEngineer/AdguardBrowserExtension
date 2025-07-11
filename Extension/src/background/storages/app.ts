@@ -21,35 +21,43 @@ export const enum AppContextKey {
     ClientId = 'clientId',
 }
 
-export type AppContextData = {
-    [AppContextKey.IsInit]: boolean,
-    [AppContextKey.ClientId]?: string,
+type AppContextData = {
+    /**
+     * Whether the engine is started.
+     */
+    [AppContextKey.IsInit]: boolean;
+
+    /**
+     * Client ID.
+     */
+    [AppContextKey.ClientId]?: string;
 };
 
 /**
- * Memory storage for app global context
+ * Memory storage for app global context.
  */
-export class AppContext {
+class AppContext {
     // Initialize with default data
     private data: AppContextData = {
         [AppContextKey.IsInit]: false,
     };
 
     /**
-     * Gets app context value
+     * Returns app context value.
      *
-     * @param key - context key
-     * @returns context value
+     * @param key Context key.
+     *
+     * @returns Context value.
      */
     public get<T extends AppContextKey>(key: T): AppContextData[T] {
         return this.data[key];
     }
 
     /**
-     * Sets app context value
+     * Sets app context value.
      *
-     * @param key - context key
-     * @param value - context value
+     * @param key Context key.
+     * @param value Context value.
      */
     public set<T extends AppContextKey>(key: T, value: AppContextData[T]): void {
         this.data[key] = value;

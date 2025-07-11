@@ -1,4 +1,11 @@
 (function(source, args) {
+    const flag = "done";
+    const uniqueIdentifier = source.uniqueId + source.name + "_" + (Array.isArray(args) ? args.join("_") : "");
+    if (source.uniqueId) {
+        if (Window.prototype.toString[uniqueIdentifier] === flag) {
+            return;
+        }
+    }
     function Prebid(source) {
         var pushFunction = function pushFunction(arg) {
             if (typeof arg === "function") {
@@ -8,64 +15,45 @@
             }
         };
         var pbjsWrapper = {
-            addAdUnits: function addAdUnits() {},
+            addAdUnits() {},
             adServers: {
                 dfp: {
                     buildVideoUrl: noopStr
                 }
             },
             adUnits: [],
-            aliasBidder: function aliasBidder() {},
+            aliasBidder() {},
             cmd: [],
-            enableAnalytics: function enableAnalytics() {},
+            enableAnalytics() {},
             getHighestCpmBids: noopArray,
             libLoaded: true,
             que: [],
-            requestBids: function requestBids(arg) {
+            requestBids(arg) {
                 if (arg instanceof Object && arg.bidsBackHandler) {
                     try {
                         arg.bidsBackHandler.call();
                     } catch (ex) {}
                 }
             },
-            removeAdUnit: function removeAdUnit() {},
-            setBidderConfig: function setBidderConfig() {},
-            setConfig: function setConfig() {},
-            setTargetingForGPTAsync: function setTargetingForGPTAsync() {}
+            removeAdUnit() {},
+            setBidderConfig() {},
+            setConfig() {},
+            setTargetingForGPTAsync() {}
         };
         pbjsWrapper.cmd.push = pushFunction;
         pbjsWrapper.que.push = pushFunction;
         window.pbjs = pbjsWrapper;
         hit(source);
     }
-    function hit(source) {
-        if (source.verbose !== true) {
-            return;
-        }
-        try {
-            var log = console.log.bind(console);
-            var trace = console.trace.bind(console);
-            var prefix = source.ruleText || "";
-            if (source.domainName) {
-                var AG_SCRIPTLET_MARKER = "#%#//";
-                var UBO_SCRIPTLET_MARKER = "##+js";
-                var ruleStartIndex;
-                if (source.ruleText.indexOf(AG_SCRIPTLET_MARKER) > -1) {
-                    ruleStartIndex = source.ruleText.indexOf(AG_SCRIPTLET_MARKER);
-                } else if (source.ruleText.indexOf(UBO_SCRIPTLET_MARKER) > -1) {
-                    ruleStartIndex = source.ruleText.indexOf(UBO_SCRIPTLET_MARKER);
-                }
-                var rulePart = source.ruleText.slice(ruleStartIndex);
-                prefix = "".concat(source.domainName).concat(rulePart);
-            }
-            log("".concat(prefix, " trace start"));
-            if (trace) {
-                trace();
-            }
-            log("".concat(prefix, " trace end"));
-        } catch (e) {}
-        if (typeof window.__debug === "function") {
-            window.__debug(source);
+    function hit(e) {
+        if (e.verbose) {
+            try {
+                var n = console.trace.bind(console), i = "[AdGuard] ";
+                "corelibs" === e.engine ? i += e.ruleText : (e.domainName && (i += `${e.domainName}`), 
+                e.args ? i += `#%#//scriptlet('${e.name}', '${e.args.join("', '")}')` : i += `#%#//scriptlet('${e.name}')`), 
+                n && n(i);
+            } catch (e) {}
+            "function" == typeof window.__debug && window.__debug(e);
         }
     }
     function noopFunc() {}
@@ -78,6 +66,14 @@
     const updatedArgs = args ? [].concat(source).concat(args) : [ source ];
     try {
         Prebid.apply(this, updatedArgs);
+        if (source.uniqueId) {
+            Object.defineProperty(Window.prototype.toString, uniqueIdentifier, {
+                value: flag,
+                enumerable: false,
+                writable: false,
+                configurable: false
+            });
+        }
     } catch (e) {
         console.log(e);
     }

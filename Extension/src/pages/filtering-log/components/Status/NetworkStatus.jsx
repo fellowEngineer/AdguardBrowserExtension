@@ -18,37 +18,60 @@
 
 import React from 'react';
 
+import { translator } from '../../../../common/translators/translator';
 import { Popover } from '../../../common/components/ui/Popover';
-import { reactTranslator } from '../../../../common/translators/reactTranslator';
+
 import { getBadgeClassNames, StatusColor } from './statusStyles';
 
 export const NetworkStatus = ({ method, statusCode, isThirdParty }) => {
     const badgeClassNames = getBadgeClassNames(StatusColor.GRAY);
 
+    const statusTooltipText = translator.getMessage('filtering_log_badge_tooltip_http_status_code');
+    const statusToShow = statusCode || '----';
+    const methodTooltipText = translator.getMessage('filtering_log_badge_tooltip_http_req_method');
+    const thirdPartyTooltipText = translator.getMessage('filtering_log_badge_tooltip_third_party');
+
+    /**
+     * Take a note that empty sr-only used to split text for screen readers,
+     * otherwise, screen readers will read the whole text as one.
+     */
     return (
         <div className="status">
             <div className="status__item">
-                <Popover text={reactTranslator.getMessage('filtering_log_badge_tooltip_http_status_code')}>
-                    <div className={badgeClassNames}>
-                        {statusCode || '---'}
+                <span className="sr-only">
+                    {`${statusTooltipText}: ${statusToShow}`}
+                </span>
+                <Popover text={statusTooltipText}>
+                    <div className={badgeClassNames} aria-hidden="true">
+                        {statusToShow}
                     </div>
                 </Popover>
             </div>
+            <div className="sr-only" />
             <div className="status__item">
-                <Popover text={reactTranslator.getMessage('filtering_log_badge_tooltip_http_req_method')}>
-                    <div className="status__badge status__badge--transparent">
+                <span className="sr-only">
+                    {`${methodTooltipText}: ${method}`}
+                </span>
+                <Popover text={methodTooltipText}>
+                    <div className="status__badge status__badge--transparent" aria-hidden="true">
                         {method}
                     </div>
                 </Popover>
             </div>
             {isThirdParty && (
-                <div className="status__item">
-                    <Popover text={reactTranslator.getMessage('filtering_log_badge_tooltip_third_party')}>
-                        <div className="tag tag--third_party tag--party">
-                            3P
-                        </div>
-                    </Popover>
-                </div>
+                <>
+                    <div className="sr-only" />
+                    <div className="status__item">
+                        <span className="sr-only">
+                            {thirdPartyTooltipText}
+                        </span>
+                        <Popover text={thirdPartyTooltipText}>
+                            <div className="tag tag--third_party tag--party tag--third_party--info" aria-hidden="true">
+                                3P
+                            </div>
+                        </Popover>
+                    </div>
+                </>
             )}
         </div>
     );

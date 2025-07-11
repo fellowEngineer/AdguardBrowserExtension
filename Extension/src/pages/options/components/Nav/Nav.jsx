@@ -17,78 +17,73 @@
  */
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
 
-import { reactTranslator } from '../../../../common/translators/reactTranslator';
+import { OptionsPageSections } from '../../../../common/nav';
+import { translator } from '../../../../common/translators/translator';
+
+import { NavItem } from './NavItem';
 
 import './nav.pcss';
 
-const Nav = ({ closeSidebar }) => {
-    const onClick = () => {
-        closeSidebar();
-    };
-
+export const Nav = ({ onLinkClick }) => {
     return (
-        <div className="nav">
-            <NavLink
-                className="nav__item"
-                exact
-                activeClassName="nav__item--active"
-                to="/"
-                onClick={onClick}
-            >
-                {reactTranslator.getMessage('options_general_settings')}
-            </NavLink>
-            <NavLink
-                className="nav__item"
-                activeClassName="nav__item--active"
-                to="/filters"
-                onClick={onClick}
-            >
-                {reactTranslator.getMessage('options_filters')}
-            </NavLink>
-            <NavLink
-                className="nav__item"
-                activeClassName="nav__item--active"
-                to="/stealth"
-                onClick={onClick}
-            >
-                {reactTranslator.getMessage('options_privacy')}
-            </NavLink>
-            <NavLink
-                className="nav__item"
-                activeClassName="nav__item--active"
-                to="/allowlist"
-                onClick={onClick}
-            >
-                {reactTranslator.getMessage('options_allowlist')}
-            </NavLink>
-            <NavLink
-                className="nav__item"
-                activeClassName="nav__item--active"
-                to="/user-filter"
-                onClick={onClick}
-            >
-                {reactTranslator.getMessage('options_userfilter')}
-            </NavLink>
-            <NavLink
-                className="nav__item"
-                activeClassName="nav__item--active"
-                to="/miscellaneous"
-                onClick={onClick}
-            >
-                {reactTranslator.getMessage('options_miscellaneous_settings')}
-            </NavLink>
-            <NavLink
-                className="nav__item"
-                activeClassName="nav__item--active"
-                to="/about"
-                onClick={onClick}
-            >
-                {reactTranslator.getMessage('options_about')}
-            </NavLink>
-        </div>
+        <nav className="nav">
+            <ul className="nav__list">
+                <NavItem
+                    to="/"
+                    onClick={onLinkClick}
+                    end
+                >
+                    {translator.getMessage('options_general_settings')}
+                </NavItem>
+                <NavItem
+                    to={`/${OptionsPageSections.filters}`}
+                    onClick={onLinkClick}
+                >
+                    {translator.getMessage('options_filters')}
+                </NavItem>
+                <NavItem
+                    to={`/${OptionsPageSections.stealth}`}
+                    onClick={onLinkClick}
+                >
+                    {translator.getMessage('options_privacy')}
+                </NavItem>
+                <NavItem
+                    to={`/${OptionsPageSections.allowlist}`}
+                    onClick={onLinkClick}
+                >
+                    {translator.getMessage('options_allowlist')}
+                </NavItem>
+                <NavItem
+                    to={`/${OptionsPageSections.userFilter}`}
+                    onClick={onLinkClick}
+                >
+                    {translator.getMessage('options_userfilter')}
+                </NavItem>
+                <NavItem
+                    to={`/${OptionsPageSections.miscellaneous}`}
+                    onClick={onLinkClick}
+                >
+                    {translator.getMessage('options_miscellaneous_settings')}
+                </NavItem>
+                {
+                    __IS_MV3__
+                    && (
+                        <NavItem
+                            to={`/${OptionsPageSections.ruleLimits}`}
+                            onClick={onLinkClick}
+                        >
+                            {translator.getMessage('options_rule_limits')}
+                        </NavItem>
+                    )
+                }
+                <NavItem
+                    to={`/${OptionsPageSections.about}`}
+                    onClick={onLinkClick}
+                >
+                    {translator.getMessage('options_about')}
+                </NavItem>
+            </ul>
+        </nav>
     );
 };
-
-export { Nav };

@@ -15,18 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
+import { logger } from '../../common/logger';
 import {
     SettingOption,
-    Metadata,
-    FilterVersionStorageData,
-    FilterVersionData,
+    type Metadata,
+    type FilterVersionStorageData,
+    type FilterVersionData,
 } from '../schema';
 import { StringStorage } from '../utils/string-storage';
+import { type FilterUpdateOptionsList } from '../api';
+
 import { settingsStorage } from './settings';
 
 /**
  * Class for synchronous control {@link FilterVersionStorageData},
- * that is persisted as string in another key value storage
+ * that is persisted as string in another key value storage.
  *
  * @see {@link StringStorage}
  */
@@ -36,11 +39,13 @@ export class FilterVersionStorage extends StringStorage<
     'sync'
 > {
     /**
-     * Gets specified filter version
+     * Returns specified filter version.
      *
-     * @param filterId - filter id
-     * @returns specified filter state or undefined, if it is not found
-     * @throws error if filter version data is not initialized
+     * @param filterId Filter id.
+     *
+     * @returns Specified filter state or undefined, if it is not found.
+     *
+     * @throws Error if filter version data is not initialized.
      */
     public get(filterId: number): FilterVersionData | undefined {
         if (!this.data) {
@@ -51,11 +56,12 @@ export class FilterVersionStorage extends StringStorage<
     }
 
     /**
-     * Sets specified filter version
+     * Sets specified filter version.
      *
-     * @param filterId - filter id
-     * @param data - filter version data
-     * @throws error if filter version data is not initialized
+     * @param filterId Filter id.
+     * @param data Filter version data.
+     *
+     * @throws Error if filter version data is not initialized.
      */
     public set(filterId: number, data: FilterVersionData): void {
         if (!this.data) {
@@ -68,10 +74,11 @@ export class FilterVersionStorage extends StringStorage<
     }
 
     /**
-     * Deletes specified filter version
+     * Deletes specified filter version.
      *
-     * @param filterId - filter id
-     * @throws error if filter version data is not initialized
+     * @param filterId Filter id.
+     *
+     * @throws Error if filter version data is not initialized.
      */
     public delete(filterId: number): void {
         if (!this.data) {
@@ -84,29 +91,39 @@ export class FilterVersionStorage extends StringStorage<
     }
 
     /**
-     * Update last check time stamp for specified filters with current time
+     * Update last check time stamp for specified filters with current time.
      *
-     * @param filtersIds - list of filters ids
-     * @throws error if filter version data is not initialized
+     * @param filterDetails List of filter details to update check time for.
+     *
+     * @throws Error if filter version data is not initialized.
      */
-    public refreshLastCheckTime(filtersIds: number[]): void {
+    public refreshLastCheckTime(filterDetails: FilterUpdateOptionsList): void {
         if (!this.data) {
             throw FilterVersionStorage.createNotInitializedError();
         }
 
         const now = Date.now();
 
-        for (let i = 0; i < filtersIds.length; i += 1) {
-            const filterId = filtersIds[i];
+        for (let i = 0; i < filterDetails.length; i += 1) {
+            const filterDetail = filterDetails[i];
 
-            if (!filterId) {
+            if (!filterDetail) {
                 continue;
             }
 
+            const { filterId, ignorePatches } = filterDetail;
+
             const data = this.data[filterId];
 
-            if (data) {
+            if (!data) {
+                logger.warn(`[ext.FilterVersionStorage.refreshLastCheckTime]: failed to refresh last check time for filter ${filterId}.`);
+                continue;
+            }
+
+            if (ignorePatches) {
                 data.lastCheckTime = now;
+            } else {
+                data.lastScheduledCheckTime = now;
             }
         }
 
@@ -114,11 +131,12 @@ export class FilterVersionStorage extends StringStorage<
     }
 
     /**
-     * Sets version data for new filters, found in passed {@link Metadata}
+     * Sets version data for new filters, found in passed {@link Metadata}.
      *
-     * @param data - current {@link FilterVersionStorageData}
-     * @param metadata - app {@link Metadata}
-     * @returns - updated {@link FilterVersionStorageData}
+     * @param data Current {@link FilterVersionStorageData}.
+     * @param metadata App {@link Metadata}.
+     *
+     * @returns Updated {@link FilterVersionStorageData}.
      */
     public static applyMetadata(
         data: FilterVersionStorageData,
@@ -138,6 +156,7 @@ export class FilterVersionStorage extends StringStorage<
                     expires,
                     lastUpdateTime: new Date(timeUpdated).getTime(),
                     lastCheckTime: Date.now(),
+                    lastScheduledCheckTime: Date.now(),
                 };
             }
         });
@@ -145,14 +164,19 @@ export class FilterVersionStorage extends StringStorage<
         return data;
     }
 
+    /**
+     * Helper function to create a basic {@link Error} with a custom message.
+     *
+     * @returns A basic {@link Error} with a custom message.
+     */
     private static createNotInitializedError(): Error {
         return new Error('Filter version data is not initialized');
     }
 }
 
 /**
- * {@link FilterVersionStorage} instance, that stores
+ * {@link FilterVersionStorage} Instance, that stores
  * stringified {@link FilterVersionStorageData} in {@link settingsStorage} under
- * {@link SettingOption.FiltersVersion} key
+ * {@link SettingOption.FiltersVersion} key.
  */
 export const filterVersionStorage = new FilterVersionStorage(SettingOption.FiltersVersion, settingsStorage);

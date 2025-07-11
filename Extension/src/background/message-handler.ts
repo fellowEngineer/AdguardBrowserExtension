@@ -15,60 +15,67 @@
  * You should have received a copy of the GNU General Public License
  * along with AdGuard Browser Extension. If not, see <http://www.gnu.org/licenses/>.
  */
-import browser, { Runtime } from 'webextension-polyfill';
-import { Engine, EngineMessage } from './engine';
+import { type Runtime } from 'webextension-polyfill';
+
+import { Engine, type EngineMessage } from 'engine';
 
 import {
-    MessageType,
-    Message,
-    ExtractedMessage,
+    type Message,
     APP_MESSAGE_HANDLER_NAME,
+    MessageHandler,
 } from '../common/messages';
+import { logger } from '../common/logger';
 
-export type MessageListener<T> = (message: T, sender: Runtime.MessageSender) => Promise<unknown> | unknown;
+import { engine } from './engine';
 
-export class MessageHandler {
-  private listeners = new Map();
+/**
+ * Common message handler {@link MessageHandler} specified for background
+ * messages with type {@link EngineMessage}.
+ *
+ * @augments MessageHandler {@link MessageHandler}.
+ */
+export class BackgroundMessageHandler extends MessageHandler {
+    /**
+     * Handles messages for webextension engine {@link EngineMessage}.
+     *
+     * @param message Message of basic type {@link Message} or {@link EngineMessage}.
+     * @param sender Item of {@link Runtime.MessageSender}.
+     *
+     * @returns {Promise<unknown> | undefined} The result from the listener,
+     * if the listener was found. If not found, an undefined value is returned.
+     */
+    protected handleMessage(
+        message: Message | EngineMessage,
+        sender: Runtime.MessageSender,
+    ): Promise<unknown> | undefined {
+        if (message.handlerName === Engine.messageHandlerName) {
+            return engine.handleMessage(message, sender);
+        }
 
-  constructor() {
-      this.handleMessage = this.handleMessage.bind(this);
-  }
+        if (message.handlerName === APP_MESSAGE_HANDLER_NAME) {
+            // Check type
+            if (!BackgroundMessageHandler.isValidMessageType(message)) {
+                logger.error('[ext.BackgroundMessageHandler.handleMessage]: invalid message:', message);
+                return;
+            }
 
-  public init(): void {
-      browser.runtime.onMessage.addListener(this.handleMessage);
-  }
+            const listener = this.listeners.get(message.type);
+            if (!listener) {
+                return;
+            }
 
-  public addListener<T extends MessageType>(type: T, listener: MessageListener<ExtractedMessage<T>>): void {
-      if (this.listeners.has(type)) {
-          throw new Error(`Message handler: ${type} listener has already been registered`);
-      }
+            const fn = (async (): Promise<unknown> => {
+                try {
+                    return await listener(message, sender);
+                } catch (e) {
+                    logger.error('[ext.BackgroundMessageHandler.handleMessage]: an error occurred while handling message:', message, 'error:', e);
 
-      this.listeners.set(type, listener);
-  }
-
-  public removeListener<T extends MessageType>(type: T): void {
-      this.listeners.delete(type);
-  }
-
-  public removeListeners(): void {
-      this.listeners.clear();
-  }
-
-  private handleMessage<T extends Message | EngineMessage>(
-      message: T,
-      sender: Runtime.MessageSender,
-  ): Promise<unknown> | undefined {
-      if (message.handlerName === Engine.messageHandlerName) {
-          return Engine.handleMessage(message, sender);
-      }
-
-      if (message.handlerName === APP_MESSAGE_HANDLER_NAME) {
-          const listener = this.listeners.get(message.type) as MessageListener<T>;
-          if (listener) {
-              return Promise.resolve(listener(message, sender));
-          }
-      }
-  }
+                    throw e;
+                }
+            });
+            return fn();
+        }
+    }
 }
 
-export const messageHandler = new MessageHandler();
+export const messageHandler = new BackgroundMessageHandler();

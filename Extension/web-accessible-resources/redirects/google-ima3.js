@@ -1,8 +1,23 @@
 (function(source, args) {
+    const flag = "done";
+    const uniqueIdentifier = source.uniqueId + source.name + "_" + (Array.isArray(args) ? args.join("_") : "");
+    if (source.uniqueId) {
+        if (Window.prototype.toString[uniqueIdentifier] === flag) {
+            return;
+        }
+    }
     function GoogleIma3(source) {
+        var _window$google$ima;
         var VERSION = "3.453.0";
         var ima = {};
-        var AdDisplayContainer = function AdDisplayContainer() {};
+        var AdDisplayContainer = function AdDisplayContainer(containerElement) {
+            var divElement = document.createElement("div");
+            divElement.style.setProperty("display", "none", "important");
+            divElement.style.setProperty("visibility", "collapse", "important");
+            if (containerElement) {
+                containerElement.appendChild(divElement);
+            }
+        };
         AdDisplayContainer.prototype.destroy = noopFunc;
         AdDisplayContainer.prototype.initialize = noopFunc;
         var ImaSdkSettings = function ImaSdkSettings() {};
@@ -25,75 +40,75 @@
             t: "",
             v: "",
             getCompanionBackfill: noopFunc,
-            getDisableCustomPlaybackForIOS10Plus: function getDisableCustomPlaybackForIOS10Plus() {
+            getDisableCustomPlaybackForIOS10Plus() {
                 return this.i;
             },
             getDisabledFlashAds: function getDisabledFlashAds() {
                 return true;
             },
-            getFeatureFlags: function getFeatureFlags() {
+            getFeatureFlags() {
                 return this.f;
             },
-            getLocale: function getLocale() {
+            getLocale() {
                 return this.l;
             },
-            getNumRedirects: function getNumRedirects() {
+            getNumRedirects() {
                 return this.r;
             },
-            getPlayerType: function getPlayerType() {
+            getPlayerType() {
                 return this.t;
             },
-            getPlayerVersion: function getPlayerVersion() {
+            getPlayerVersion() {
                 return this.v;
             },
-            getPpid: function getPpid() {
+            getPpid() {
                 return this.p;
             },
-            getVpaidMode: function getVpaidMode() {
+            getVpaidMode() {
                 return this.C;
             },
-            isCookiesEnabled: function isCookiesEnabled() {
+            isCookiesEnabled() {
                 return this.c;
             },
-            isVpaidAdapter: function isVpaidAdapter() {
+            isVpaidAdapter() {
                 return this.M;
             },
             setCompanionBackfill: noopFunc,
-            setAutoPlayAdBreaks: function setAutoPlayAdBreaks(a) {
+            setAutoPlayAdBreaks(a) {
                 this.K = a;
             },
-            setCookiesEnabled: function setCookiesEnabled(c) {
+            setCookiesEnabled(c) {
                 this.c = !!c;
             },
-            setDisableCustomPlaybackForIOS10Plus: function setDisableCustomPlaybackForIOS10Plus(i) {
+            setDisableCustomPlaybackForIOS10Plus(i) {
                 this.i = !!i;
             },
             setDisableFlashAds: noopFunc,
-            setFeatureFlags: function setFeatureFlags(f) {
+            setFeatureFlags(f) {
                 this.f = !!f;
             },
-            setIsVpaidAdapter: function setIsVpaidAdapter(a) {
+            setIsVpaidAdapter(a) {
                 this.M = a;
             },
-            setLocale: function setLocale(l) {
+            setLocale(l) {
                 this.l = !!l;
             },
-            setNumRedirects: function setNumRedirects(r) {
+            setNumRedirects(r) {
                 this.r = !!r;
             },
-            setPageCorrelator: function setPageCorrelator(a) {
+            setPageCorrelator(a) {
                 this.R = a;
             },
-            setPlayerType: function setPlayerType(t) {
+            setPlayerType(t) {
                 this.t = !!t;
             },
-            setPlayerVersion: function setPlayerVersion(v) {
+            setPlayerVersion(v) {
                 this.v = !!v;
             },
-            setPpid: function setPpid(p) {
+            setPpid(p) {
                 this.p = !!p;
             },
-            setVpaidMode: function setVpaidMode(a) {
+            setVpaidMode(a) {
                 this.C = a;
             },
             setSessionId: noopFunc,
@@ -112,7 +127,8 @@
         var EventHandler = function EventHandler() {
             this.listeners = new Map;
             this._dispatch = function(e) {
-                var listeners = this.listeners.get(e.type) || [];
+                var listeners = this.listeners.get(e.type);
+                listeners = listeners ? listeners.values() : [];
                 for (var _i = 0, _Array$from = Array.from(listeners); _i < _Array$from.length; _i++) {
                     var listener = _Array$from[_i];
                     try {
@@ -122,15 +138,27 @@
                     }
                 }
             };
-            this.addEventListener = function(t, c) {
-                if (!this.listeners.has(t)) {
-                    this.listeners.set(t, new Set);
+            this.addEventListener = function(types, callback, options, context) {
+                if (!Array.isArray(types)) {
+                    types = [ types ];
                 }
-                this.listeners.get(t).add(c);
+                for (var i = 0; i < types.length; i += 1) {
+                    var type = types[i];
+                    if (!this.listeners.has(type)) {
+                        this.listeners.set(type, new Map);
+                    }
+                    this.listeners.get(type).set(callback, callback.bind(context || this));
+                }
             };
-            this.removeEventListener = function(t, c) {
-                var _this$listeners$get;
-                (_this$listeners$get = this.listeners.get(t)) === null || _this$listeners$get === void 0 ? void 0 : _this$listeners$get.delete(c);
+            this.removeEventListener = function(types, callback) {
+                if (!Array.isArray(types)) {
+                    types = [ types ];
+                }
+                for (var i = 0; i < types.length; i += 1) {
+                    var _this$listeners$get;
+                    var type = types[i];
+                    (_this$listeners$get = this.listeners.get(type)) === null || _this$listeners$get === void 0 || _this$listeners$get.delete(callback);
+                }
             };
         };
         var AdsManager = new EventHandler;
@@ -196,7 +224,7 @@
             getAdsManager: function getAdsManager() {
                 return manager;
             },
-            getUserRequestContext: function getUserRequestContext() {
+            getUserRequestContext() {
                 if (this.userRequestContext) {
                     return this.userRequestContext;
                 }
@@ -219,7 +247,7 @@
         AdsLoader.prototype.requestAds = function(adsRequest, userRequestContext) {
             var _this = this;
             requestAnimationFrame((function() {
-                var ADS_MANAGER_LOADED = AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED;
+                var {ADS_MANAGER_LOADED: ADS_MANAGER_LOADED} = AdsManagerLoadedEvent.Type;
                 var event = new ima.AdsManagerLoadedEvent(ADS_MANAGER_LOADED, adsRequest, userRequestContext);
                 _this._dispatch(event);
             }));
@@ -256,13 +284,20 @@
                 return 1;
             }
         };
+        var UniversalAdIdInfo = function UniversalAdIdInfo() {};
+        UniversalAdIdInfo.prototype.getAdIdRegistry = function() {
+            return "";
+        };
+        UniversalAdIdInfo.prototype.getAdIsValue = function() {
+            return "";
+        };
         var Ad = function Ad() {};
         Ad.prototype = {
             pi: new AdPodInfo,
             getAdId: function getAdId() {
                 return "";
             },
-            getAdPodInfo: function getAdPodInfo() {
+            getAdPodInfo() {
                 return this.pi;
             },
             getAdSystem: function getAdSystem() {
@@ -320,7 +355,7 @@
                 return "unknown";
             },
             getUniversalAdIds: function getUniversalAdIds() {
-                return [ "" ];
+                return [ new UniversalAdIdInfo ];
             },
             getUniversalAdIdValue: function getUniversalAdIdValue() {
                 return "unknown";
@@ -349,7 +384,7 @@
             isLinear: function isLinear() {
                 return true;
             },
-            isSkippable: function isSkippable() {
+            isSkippable() {
                 return true;
             }
         };
@@ -380,7 +415,9 @@
             this.getErrorCode = function() {
                 return this.errorCode;
             };
-            this.getInnerError = function() {};
+            this.getInnerError = function() {
+                return null;
+            };
             this.getMessage = function() {
                 return this.message;
             };
@@ -391,7 +428,7 @@
                 return this.vastErrorCode;
             };
             this.toString = function() {
-                return "AdError ".concat(this.errorCode, ": ").concat(this.message);
+                return `AdError ${this.errorCode}: ${this.message}`;
             };
         };
         AdError.ErrorCode = {};
@@ -399,9 +436,9 @@
         var isEngadget = function isEngadget() {
             try {
                 for (var _i3 = 0, _Object$values = Object.values(window.vidible._getContexts()); _i3 < _Object$values.length; _i3++) {
-                    var _ctx$getPlayer, _ctx$getPlayer$div;
+                    var _ctx$getPlayer;
                     var ctx = _Object$values[_i3];
-                    if ((_ctx$getPlayer = ctx.getPlayer()) !== null && _ctx$getPlayer !== void 0 && (_ctx$getPlayer$div = _ctx$getPlayer.div) !== null && _ctx$getPlayer$div !== void 0 && _ctx$getPlayer$div.innerHTML.includes("www.engadget.com")) {
+                    if ((_ctx$getPlayer = ctx.getPlayer()) !== null && _ctx$getPlayer !== void 0 && (_ctx$getPlayer = _ctx$getPlayer.div) !== null && _ctx$getPlayer !== void 0 && _ctx$getPlayer.innerHTML.includes("www.engadget.com")) {
                         return true;
                     }
                 }
@@ -498,12 +535,11 @@
             getAdIdRegistry: function getAdIdRegistry() {
                 return "";
             },
-            getAdIsValue: function getAdIsValue() {
+            getAdIdValue: function getAdIdValue() {
                 return "";
             }
         };
         var AdProgressData = noopFunc;
-        var UniversalAdIdInfo = function UniversalAdIdInfo() {};
         Object.assign(ima, {
             AdCuePoints: AdCuePoints,
             AdDisplayContainer: AdDisplayContainer,
@@ -527,6 +563,26 @@
                 FULL: "full",
                 LIMITED: "limited"
             },
+            OmidVerificationVendor: {
+                1: "OTHER",
+                2: "MOAT",
+                3: "DOUBLEVERIFY",
+                4: "INTEGRAL_AD_SCIENCE",
+                5: "PIXELATE",
+                6: "NIELSEN",
+                7: "COMSCORE",
+                8: "MEETRICS",
+                9: "GOOGLE",
+                OTHER: 1,
+                MOAT: 2,
+                DOUBLEVERIFY: 3,
+                INTEGRAL_AD_SCIENCE: 4,
+                PIXELATE: 5,
+                NIELSEN: 6,
+                COMSCORE: 7,
+                MEETRICS: 8,
+                GOOGLE: 9
+            },
             settings: new ImaSdkSettings,
             UiElements: {
                 AD_ATTRIBUTION: "adAttribution",
@@ -542,49 +598,42 @@
         if (!window.google) {
             window.google = {};
         }
+        if ((_window$google$ima = window.google.ima) !== null && _window$google$ima !== void 0 && _window$google$ima.dai) {
+            ima.dai = window.google.ima.dai;
+        }
         window.google.ima = ima;
         hit(source);
     }
-    function hit(source) {
-        if (source.verbose !== true) {
-            return;
-        }
-        try {
-            var log = console.log.bind(console);
-            var trace = console.trace.bind(console);
-            var prefix = source.ruleText || "";
-            if (source.domainName) {
-                var AG_SCRIPTLET_MARKER = "#%#//";
-                var UBO_SCRIPTLET_MARKER = "##+js";
-                var ruleStartIndex;
-                if (source.ruleText.indexOf(AG_SCRIPTLET_MARKER) > -1) {
-                    ruleStartIndex = source.ruleText.indexOf(AG_SCRIPTLET_MARKER);
-                } else if (source.ruleText.indexOf(UBO_SCRIPTLET_MARKER) > -1) {
-                    ruleStartIndex = source.ruleText.indexOf(UBO_SCRIPTLET_MARKER);
-                }
-                var rulePart = source.ruleText.slice(ruleStartIndex);
-                prefix = "".concat(source.domainName).concat(rulePart);
-            }
-            log("".concat(prefix, " trace start"));
-            if (trace) {
-                trace();
-            }
-            log("".concat(prefix, " trace end"));
-        } catch (e) {}
-        if (typeof window.__debug === "function") {
-            window.__debug(source);
+    function hit(e) {
+        if (e.verbose) {
+            try {
+                var n = console.trace.bind(console), i = "[AdGuard] ";
+                "corelibs" === e.engine ? i += e.ruleText : (e.domainName && (i += `${e.domainName}`), 
+                e.args ? i += `#%#//scriptlet('${e.name}', '${e.args.join("', '")}')` : i += `#%#//scriptlet('${e.name}')`), 
+                n && n(i);
+            } catch (e) {}
+            "function" == typeof window.__debug && window.__debug(e);
         }
     }
     function noopFunc() {}
-    function logMessage(source, message) {
-        var forced = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-        if (forced || source.verbose) {
-            console.log("".concat(source.name, ": ").concat(message));
+    function logMessage(e, o) {
+        var n = arguments.length > 2 && void 0 !== arguments[2] && arguments[2], g = !(arguments.length > 3 && void 0 !== arguments[3]) || arguments[3], {name: l, verbose: v} = e;
+        if (n || v) {
+            var a = console.log;
+            g ? a(`${l}: ${o}`) : a(`${l}:`, o);
         }
     }
     const updatedArgs = args ? [].concat(source).concat(args) : [ source ];
     try {
         GoogleIma3.apply(this, updatedArgs);
+        if (source.uniqueId) {
+            Object.defineProperty(Window.prototype.toString, uniqueIdentifier, {
+                value: flag,
+                enumerable: false,
+                writable: false,
+                configurable: false
+            });
+        }
     } catch (e) {
         console.log(e);
     }
